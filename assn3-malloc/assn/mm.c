@@ -67,7 +67,7 @@ team_t team = {
 
 void* heap_listp = NULL;
 
-void *free_list[10];
+void *free_list[15];
 
 /**********************************************************
  * mm_init
@@ -85,7 +85,7 @@ int mm_init(void)
      	PUT(heap_listp + (3 * WSIZE), PACK(0, 1));    // epilogue header // what is epilogue header?
      	heap_listp += DSIZE; //why is it +DSIZE if we added 2DSIZE?
 
-     	for(i =0;i<10;i++){
+     	for(i =0;i<15;i++){
     		 free_list[i]=NULL;
      	}
      	return 0;
@@ -111,9 +111,20 @@ int find_index(size){
 		index = 7;
 	}else if(size>4096 && size <= 8192){
 		index = 8;
-	}else if(size>8192){
+	}else if(size>8192 && size <= 16384){
 		index = 9;
+	}else if(size>16384 && size <= 32768){
+		index = 10;
+	}else if(size>32768 && size <= 65536){
+		index = 11;
+	}else if(size>65536 && size <= 131072){
+		index = 12;
+	}else if(size>131072 && size <= 262144){
+		index = 13;
+	}else if(size>262144){
+		index = 14;
 	}
+
 	return index;
 }
 
@@ -166,13 +177,13 @@ void *coalesce(void *bp)
 	size_t size = GET_SIZE(HDRP(bp));
 
 	if (prev_alloc && next_alloc) {       /* Case 1 */
-        	remove_from_free(bp);
+//        	remove_from_free(bp);
 		return bp;
     	}else if (prev_alloc && !next_alloc) { /* Case 2 */
 		size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
 	
 		remove_from_free(next);
-		remove_from_free(bp);
+//		remove_from_free(bp);
 
         	PUT(HDRP(bp), PACK(size, 0));
         	PUT(FTRP(bp), PACK(size, 0));
@@ -181,7 +192,7 @@ void *coalesce(void *bp)
         	size += GET_SIZE(HDRP(PREV_BLKP(bp)));
         
 		remove_from_free(prev);
-		remove_from_free(bp);
+//		remove_from_free(bp);
 
 		PUT(FTRP(bp), PACK(size, 0));
         	PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
@@ -192,7 +203,7 @@ void *coalesce(void *bp)
 		
 		remove_from_free(prev);
 		remove_from_free(next);
-		remove_from_free(bp);
+//		remove_from_free(bp);
 
 		PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
 		PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
@@ -223,11 +234,16 @@ void *extend_heap(size_t words)
 	PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));        // new epilogue header
 
     /* Coalesce if the previous block was free */
-	//void* coal_bp;
+	void* coal_bp;
+
+	//for coalesce//
 	//coal_bp = coalesce(bp);
-	//add_to_free(coal_bp);
-	add_to_free(HDRP(bp),bp);
+	//add_to_free(HDRP(coal_bp),coal_bp);
 	//return coal_bp;
+	//end of coalesce//
+	
+	//for no coalesce
+	//add_to_free(HDRP(bp),bp);
 	return bp;
 }
 
@@ -265,7 +281,7 @@ void * find_fit(size_t asize)
 		}
 	}
 
-	while(head==NULL && index <=9){
+	while(head==NULL && index <=14){
     		index++;
 		head = free_list[index];
 		if(head!=NULL)
@@ -274,24 +290,7 @@ void * find_fit(size_t asize)
 	if(head==NULL){
 		return NULL;
 	}else{
-		prev = GET(head+DSIZE);
-		next = GET(head+WSIZE);
-		//only item in list
-    		if((prev==NULL) && (next==NULL)){
-    			free_list[index]=NULL;
-    		}//first item of list
-		else if((prev==NULL) && (next!=NULL)){
-			PUT(next+DSIZE,NULL); //set prev of next block to null
-			free_list[index] = next;
-		//last item of list
-		}else if(prev!=NULL && next==NULL){
-			PUT(prev+WSIZE,NULL);
-		}
-		//in middle of list
-	else{
-			PUT(prev+WSIZE,next);
-			PUT(next+DSIZE,prev);
-		}
+		remove_from_free(head+WSIZE);
     	}
 
 	return head+WSIZE;
@@ -361,7 +360,7 @@ void mm_free(void *bp)
     
 	PUT(HDRP(bp), PACK(size,0));
 	PUT(FTRP(bp), PACK(size,0));
-	add_to_free(HDRP(bp),bp);
+	//add_to_free(HDRP(bp),bp);
 	void* coal_bp;
 	coal_bp = coalesce(bp);
 	add_to_free(HDRP(coal_bp),coal_bp);
@@ -403,11 +402,13 @@ void *mm_malloc(size_t size)
     	extendsize = MAX(asize, CHUNKSIZE);
     	if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
         	return NULL;
- 
-    	if ((bp = find_fit(asize)) != NULL) {
+    	
+	place(bp,asize);
+	return bp;
+/*	if ((bp = find_fit(asize)) != NULL) {
         	place(bp, asize);
         	return bp;
-    	}
+    	}*/
 }
 
 /**********************************************************
