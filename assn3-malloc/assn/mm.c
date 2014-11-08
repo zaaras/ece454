@@ -330,15 +330,15 @@ void place(void* bp, size_t asize)
 
 	size_t bsize = GET_SIZE(HDRP(bp));
 
-	if((bsize-asize)>16){
+	if((bsize-asize)>32){
 		split += asize;
 		PUT(HDRP(split),PACK(bsize-asize,0));
 		PUT(FTRP(split),PACK(bsize-asize,0));
 		add_to_free(HDRP(split),split);
 	}
 	  /* Get the current block size */
-	PUT(HDRP(bp), PACK(asize, 1));
-	PUT(FTRP(bp), PACK(asize, 1));
+	PUT(HDRP(bp), PACK(bsize, 1));
+	PUT(FTRP(bp), PACK(bsize, 1));
 }
 
 /**********************************************************
