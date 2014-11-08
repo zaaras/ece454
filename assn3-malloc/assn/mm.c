@@ -144,6 +144,8 @@ void remove_from_free(void *bp){
 		PUT(prev+WSIZE,next);
 		PUT(next+DSIZE,prev);
 	}
+	PUT(bp,NULL);
+	PUT(bp+WSIZE,NULL);
 }
 
 /**********************************************************
@@ -286,7 +288,7 @@ void * find_fit(size_t asize)
 			PUT(prev+WSIZE,NULL);
 		}
 		//in middle of list
-		else{
+	else{
 			PUT(prev+WSIZE,next);
 			PUT(next+DSIZE,prev);
 		}
