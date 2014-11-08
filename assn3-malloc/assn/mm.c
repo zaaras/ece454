@@ -337,10 +337,14 @@ void place(void* bp, size_t asize)
 		PUT(HDRP(split),PACK(bsize-asize,0));
 		PUT(FTRP(split),PACK(bsize-asize,0));
 		add_to_free(HDRP(split),split);
-	}
+		PUT(HDRP(bp), PACK(asize, 1));
+		PUT(FTRP(bp), PACK(asize, 1));
+
+	}else{
 	  /* Get the current block size */
-	PUT(HDRP(bp), PACK(bsize, 1));
-	PUT(FTRP(bp), PACK(bsize, 1));
+		PUT(HDRP(bp), PACK(bsize, 1));
+		PUT(FTRP(bp), PACK(bsize, 1));
+	}
 }
 
 /**********************************************************
