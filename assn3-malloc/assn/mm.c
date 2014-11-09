@@ -316,9 +316,7 @@ void add_to_free(void *header, void *split){
 		PUT(split+WSIZE,NULL);
 		free_list[index] = HDRP(split);
 	}
-}
-
-/**********************************************************
+}/**********************************************************
  * place
  * Mark the block as allocated
  **********************************************************/
@@ -331,7 +329,7 @@ void place(void* bp, size_t asize)
 
 	size_t bsize = GET_SIZE(HDRP(bp));
 
-	if((bsize-asize)>32){
+	if((bsize-asize)>=32){
 		split += asize;
 		PUT(HDRP(split),PACK(bsize-asize,0));
 		PUT(FTRP(split),PACK(bsize-asize,0));
@@ -430,17 +428,30 @@ void *mm_realloc(void *ptr, size_t size)
     	void *newptr;
     	size_t copySize;
 
-    	newptr = mm_malloc(size);
-    	if (newptr == NULL)
-      		return NULL;
+	void *new_free;
+	new_free = ptr;
+	copySize = GET_SIZE(HDRP(oldptr));
+	if((copySize-size)>=32){
+		new_free += size;
+		PUT(HDRP(new_free),PACK(copySize-size,0));
+		PUT(FTRP(new_free),PACK(copySize-size,0));
+		add_to_free(HDRP(new_free),new_free);
+		PUT(HDRP(ptr), PACK(size, 1));
+		PUT(FTRP(ptr), PACK(size, 1));
+		return ptr;
+	}else{   
+		newptr = mm_malloc(size);
+    		if (newptr == NULL)
+      			return NULL;
 
-    	/* Copy the old data. */
-    	copySize = GET_SIZE(HDRP(oldptr));
-    	if (size < copySize)
-      		copySize = size;
-    	memcpy(newptr, oldptr, copySize);
-    	mm_free(oldptr);
-    	return newptr;
+    		/* Copy the old data. */
+    		copySize = GET_SIZE(HDRP(oldptr));
+    		if (size < copySize)
+      			copySize = size;
+    		memcpy(newptr, oldptr, copySize);
+    		mm_free(oldptr);
+    		return newptr;
+	}
 }
 
 /**********************************************************
