@@ -73,8 +73,20 @@ void *free_list[15];
  * Initialize the heap, including "allocation" of the
  * prologue and epilogue
  **********************************************************/
-int mm_init(void) {
+int power(int base,int power){
+	int num = base;
 	int i;
+
+	for(i=0;i<power;i++){
+		num *= base;
+	}
+
+
+	return num;
+}
+
+int mm_init(void) {
+	int i,j;
 	if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *) -1)
 		return -1;
 	PUT(heap_listp, 0);                         // alignment padding
@@ -86,10 +98,16 @@ int mm_init(void) {
 	for (i = 0; i < 15; i++) {
 		free_list[i] = NULL;
 	}
+
+	for(j=0;j<100;j++){
+		for (i = 0; i < 15; i++) {
+			mm_free(mm_malloc(power(2,i)-DSIZE));
+		}
+	}
 	return 0;
 }
 
-inline int find_index(int size) {
+static inline int find_index(int size) {
 	int index = -1;
 
 	if (size <= 32) {
@@ -127,7 +145,7 @@ inline int find_index(int size) {
 	return index;
 }
 
-void remove_from_free(void *bp) {
+static inline void remove_from_free(void *bp) {
 
 	int index;
 	void *prev;
@@ -290,7 +308,7 @@ void * find_fit(size_t asize) {
 	return head + WSIZE;
 }
 
-void add_to_free(void *header, void *split) {
+static inline void add_to_free(void *header, void *split) {
 	int index;
 	size_t size;
 	size = GET_SIZE(HDRP(split));
