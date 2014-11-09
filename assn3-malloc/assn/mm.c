@@ -73,20 +73,19 @@ void *free_list[15];
  * Initialize the heap, including "allocation" of the
  * prologue and epilogue
  **********************************************************/
-int power(int base,int power){
+int power(int base, int power) {
 	int num = base;
 	int i;
 
-	for(i=0;i<power;i++){
+	for (i = 0; i < power; i++) {
 		num *= base;
 	}
-
 
 	return num;
 }
 
 int mm_init(void) {
-	int i,j;
+	int i, j;
 	if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *) -1)
 		return -1;
 	PUT(heap_listp, 0);                         // alignment padding
@@ -99,9 +98,9 @@ int mm_init(void) {
 		free_list[i] = NULL;
 	}
 
-	for(j=0;j<100;j++){
+	for (j = 0; j < 100; j++) {
 		for (i = 0; i < 15; i++) {
-			mm_free(mm_malloc(power(2,i)-DSIZE));
+			mm_free(mm_malloc(power(2, i) - DSIZE));
 		}
 	}
 	return 0;
@@ -430,43 +429,48 @@ void *mm_realloc(void *ptr, size_t size) {
 	if (ptr == NULL)
 		return (mm_malloc(size));
 
-
 	void *oldptr = ptr;
 	void *newptr;
-	size_t copySize;
+	size_t copySize, asize;
 
 	void *new_free;
 	void *coal_new_free;
 	new_free = ptr;
 	copySize = GET_SIZE(HDRP(oldptr));
 
-	int diff = (copySize - (size+DSIZE));
+	if (size <= DSIZE)
+		asize = 2 * DSIZE;
+	else
+		asize = DSIZE * ((size + (DSIZE) + (DSIZE - 1)) / DSIZE);
+
+	int diff = (copySize - (asize));
 
 	// copySize is size of currently allocated ptr
 	// size is the new size the user wants
-	if ( diff >= 32) {
-		new_free += size + WSIZE;
+	if (diff >= 32) {
+		new_free += asize + WSIZE;
 		PUT(HDRP(new_free), PACK(diff,0));
 		PUT(FTRP(new_free), PACK(diff,0));
 		coal_new_free = coalesce(new_free);
 		add_to_free(HDRP(coal_new_free), coal_new_free);
-		PUT(HDRP(ptr), PACK(size, 1));
-		PUT(FTRP(ptr), PACK(size, 1));
+		PUT(HDRP(ptr), PACK(asize, 1));
+		PUT(FTRP(ptr), PACK(asize, 1));
 		return ptr;
 	} else {
 		void *next_block;
 		size_t next_size;
-		if(!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))){
-			next_block = NEXT_BLKP(ptr);
+		if (!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))) {
+			/*next_block = NEXT_BLKP(ptr);
 			next_size = GET_SIZE(HDRP(next_block));
-			if((copySize+next_size)>=(size+DSIZE)){
+
+			if ((copySize + next_size) >= (asize)) {
 				remove_from_free(next_block);
-				PUT(HDRP(ptr),PACK(copySize+next_size,1));
-				PUT(FTRP(next_block),PACK(copySize+next_size,1));
+				PUT(HDRP(ptr), PACK(copySize+next_size,1));
+				PUT(FTRP(next_block), PACK(copySize+next_size,1));
 				return ptr;
-			}
+			}*/
 		}
-		
+
 		newptr = mm_malloc(size);
 		if (newptr == NULL)
 			return NULL;
