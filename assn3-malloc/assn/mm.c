@@ -41,7 +41,7 @@ team_t team = {
  *************************************************************************/
 #define WSIZE       sizeof(void *)            /* word size (bytes) */
 #define DSIZE       (2 * WSIZE)            /* doubleword size (bytes) */
-#define CHUNKSIZE   (1<<7)      /* initial heap size (bytes) */
+#define CHUNKSIZE   (1<<10)      /* initial heap size (bytes) */
 
 #define MAX(x,y) ((x) > (y)?(x) :(y))
 
@@ -127,7 +127,7 @@ inline int find_index(int size) {
 	return index;
 }
 
-void remove_from_free(void *bp) {
+static inline void remove_from_free(void *bp) {
 
 	int index;
 	void *prev;
@@ -290,7 +290,7 @@ void * find_fit(size_t asize) {
 	return head + WSIZE;
 }
 
-void add_to_free(void *header, void *split) {
+static inline void add_to_free(void *header, void *split) {
 	int index;
 	size_t size;
 	size = GET_SIZE(HDRP(split));
