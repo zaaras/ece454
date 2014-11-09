@@ -447,8 +447,10 @@ void *mm_realloc(void *ptr, size_t size) {
 
 	// copySize is size of currently allocated ptr
 	// size is the new size the user wants
+
+	//if copySize is larger than asize and we can safely split
 	if (diff >= 32) {
-		new_free += asize + WSIZE;
+		new_free += asize;
 		PUT(HDRP(new_free), PACK(diff,0));
 		PUT(FTRP(new_free), PACK(diff,0));
 		coal_new_free = coalesce(new_free);
@@ -456,7 +458,13 @@ void *mm_realloc(void *ptr, size_t size) {
 		PUT(HDRP(ptr), PACK(asize, 1));
 		PUT(FTRP(ptr), PACK(asize, 1));
 		return ptr;
-	} else {
+	//if copySize is larger than asize but we cannot split
+	}else if(diff >= 0 && diff < 32){
+		PUT(HDRP(ptr), PACK(copySize,1));
+		PUT(FTRP(ptr), PACK(copySize,1));
+		return ptr;
+	//if new size is larger then old size
+	}else {
 		void *next_block;
 		size_t next_size;
 		if (!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))) {
