@@ -421,12 +421,12 @@ void *mm_realloc(void *ptr, size_t size) {
 	new_free = ptr;
 	copySize = GET_SIZE(HDRP(oldptr));
 
-	int diff = (copySize - size);
+	int diff = (copySize - (size+DSIZE));
 
 	// copySize is size of currently allocated ptr
 	// size is the new size the user wants
 	if ( diff >= 32) {
-		new_free += size;
+		new_free += size + WSIZE;
 		PUT(HDRP(new_free), PACK(diff,0));
 		PUT(FTRP(new_free), PACK(diff,0));
 		add_to_free(HDRP(new_free), new_free);
