@@ -418,6 +418,7 @@ void *mm_realloc(void *ptr, size_t size) {
 	size_t copySize;
 
 	void *new_free;
+	void *coal_new_free;
 	new_free = ptr;
 	copySize = GET_SIZE(HDRP(oldptr));
 
@@ -429,7 +430,8 @@ void *mm_realloc(void *ptr, size_t size) {
 		new_free += size + WSIZE;
 		PUT(HDRP(new_free), PACK(diff,0));
 		PUT(FTRP(new_free), PACK(diff,0));
-		add_to_free(HDRP(new_free), new_free);
+		coal_new_free = coalesce(new_free);
+		add_to_free(HDRP(coal_new_free), coal_new_free);
 		PUT(HDRP(ptr), PACK(size, 1));
 		PUT(FTRP(ptr), PACK(size, 1));
 		return ptr;
