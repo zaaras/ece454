@@ -458,11 +458,11 @@ void *mm_realloc(void *ptr, size_t size) {
 		size_t next_size;
 		if(!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))){
 			next_block = NEXT_BLKP(ptr);
-			next_size = GET_SIZE(next_block);
-			if(copySize+next_size>=size+DSIZE){
+			next_size = GET_SIZE(HDRP(next_block));
+			if((copySize+next_size)>=(size+DSIZE)){
+				remove_from_free(next_block);
 				PUT(HDRP(ptr),PACK(copySize+next_size,1));
 				PUT(FTRP(next_block),PACK(copySize+next_size,1));
-				remove_from_free(next_block);
 				return ptr;
 			}
 		}
