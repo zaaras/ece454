@@ -453,8 +453,6 @@ void *mm_realloc(void *ptr, size_t size) {
 		new_free += asize;
 		PUT(HDRP(new_free), PACK(diff,0));
 		PUT(FTRP(new_free), PACK(diff,0));
-		//coal_new_free = coalesce(new_free);
-		//add_to_free(HDRP(coal_new_free), coal_new_free);
 		add_to_free(HDRP(new_free), new_free);
 		PUT(HDRP(ptr), PACK(asize, 1));
 		PUT(FTRP(ptr), PACK(asize, 1));
@@ -466,8 +464,8 @@ void *mm_realloc(void *ptr, size_t size) {
 		return ptr;
 	//if new size is larger then old size
 	}else {
-		void *next_block;
-		size_t next_size;
+		void *next_block, *prev_block, *temp;
+		size_t next_size,prev_size;
 		int total;
 		if (!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))) {
 			next_block = NEXT_BLKP(ptr);
@@ -477,13 +475,27 @@ void *mm_realloc(void *ptr, size_t size) {
 
 			if(total > asize){
 				// merge with next block
+				remove_from_free(next_block);
 				PUT(HDRP(ptr),PACK(total,1));
-				PUT(HDRP(next_block),PACK(total,1));
 				PUT(FTRP(next_block),PACK(total,1));
 				return ptr;
 
 			}
 
+		}else if(!GET_ALLOC(PREV_BLKP(ptr))){
+			prev_block = PREV_BLKP(ptr);
+			prev_size = GET_SIZE(HDRP(prev_block));
+			
+			total = copySize + prev_size;
+			if(total > asize){
+				remove_from_free(prev_block);
+				PUT(HDRP(prev_block),PACK(total,1));
+				PUT(FTRP(ptr),PACK(total,1));
+				temp = mm_malloc(copySize);
+				memcpy(temp, ptr,copySize);
+				memcpy(prev_block,temp,copySize);
+				return prev_block;
+			}
 		}
 
 		newptr = mm_malloc(size);
