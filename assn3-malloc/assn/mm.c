@@ -65,7 +65,6 @@ team_t team = {
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
 
 void* heap_listp = NULL;
-
 void *free_list[15];
 
 /**********************************************************
@@ -73,17 +72,6 @@ void *free_list[15];
  * Initialize the heap, including "allocation" of the
  * prologue and epilogue
  **********************************************************/
-int power(int base, int power) {
-	int num = base;
-	int i;
-
-	for (i = 0; i < power; i++) {
-		num *= base;
-	}
-
-	return num;
-}
-
 int mm_init(void) {
 	int i, j;
 	if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *) -1)
@@ -98,11 +86,6 @@ int mm_init(void) {
 		free_list[i] = NULL;
 	}
 
-	for (j = 0; j < 100; j++) {
-		for (i = 0; i < 15; i++) {
-			mm_free(mm_malloc(power(2, i) - DSIZE));
-		}
-	}
 	return 0;
 }
 
@@ -192,13 +175,11 @@ void *coalesce(void *bp) {
 	size_t size = GET_SIZE(HDRP(bp));
 
 	if (prev_alloc && next_alloc) { /* Case 1 */
-//        	remove_from_free(bp);
 		return bp;
 	} else if (prev_alloc && !next_alloc) { /* Case 2 */
 		size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
 
 		remove_from_free(next);
-//		remove_from_free(bp);
 
 		PUT(HDRP(bp), PACK(size, 0));
 		PUT(FTRP(bp), PACK(size, 0));
@@ -207,7 +188,6 @@ void *coalesce(void *bp) {
 		size += GET_SIZE(HDRP(PREV_BLKP(bp)));
 
 		remove_from_free(prev);
-//		remove_from_free(bp);
 
 		PUT(FTRP(bp), PACK(size, 0));
 		PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
@@ -217,7 +197,6 @@ void *coalesce(void *bp) {
 
 		remove_from_free(prev);
 		remove_from_free(next);
-//		remove_from_free(bp);
 
 		PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
 		PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
@@ -246,17 +225,6 @@ void *extend_heap(size_t words) {
 	PUT(FTRP(bp), PACK(size, 0));                // free block footer
 	PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));        // new epilogue header
 
-	/* Coalesce if the previous block was free */
-	void* coal_bp;
-
-	//for coalesce//
-	//coal_bp = coalesce(bp);
-	//add_to_free(HDRP(coal_bp),coal_bp);
-	//return coal_bp;
-	//end of coalesce//
-
-	//for no coalesce
-	//add_to_free(HDRP(bp),bp);
 	return bp;
 }
 
@@ -307,7 +275,7 @@ void * find_fit(size_t asize) {
 	return head + WSIZE;
 }
 
-static inline void add_to_free(void *header, void *split) {
+static inline void add_to_free(void *split) {
 	int index;
 	size_t size;
 	size = GET_SIZE(HDRP(split));
@@ -342,7 +310,7 @@ void place(void* bp, size_t asize) {
 		split += asize;
 		PUT(HDRP(split), PACK(bsize-asize,0));
 		PUT(FTRP(split), PACK(bsize-asize,0));
-		add_to_free(HDRP(split), split);
+		add_to_free( split);
 		PUT(HDRP(bp), PACK(asize, 1));
 		PUT(FTRP(bp), PACK(asize, 1));
 
@@ -366,11 +334,9 @@ void mm_free(void *bp) {
 
 	PUT(HDRP(bp), PACK(size,0));
 	PUT(FTRP(bp), PACK(size,0));
-	//add_to_free(HDRP(bp),bp);
 	void* coal_bp;
 	coal_bp = coalesce(bp);
-	add_to_free(HDRP(coal_bp), coal_bp);
-	//add_to_free(bp);
+	add_to_free( coal_bp);
 }
 
 /**********************************************************
@@ -409,10 +375,6 @@ void *mm_malloc(size_t size) {
 
 	place(bp, asize);
 	return bp;
-	/*	if ((bp = find_fit(asize)) != NULL) {
-	 place(bp, asize);
-	 return bp;
-	 }*/
 }
 
 /**********************************************************
@@ -445,15 +407,12 @@ void *mm_realloc(void *ptr, size_t size) {
 
 	int diff = (copySize - (asize));
 
-	// copySize is size of currently allocated ptr
-	// size is the new size the user wants
-
 	//if copySize is larger than asize and we can safely split
 	if (diff >= 32) {
 		new_free += asize;
 		PUT(HDRP(new_free), PACK(diff,0));
 		PUT(FTRP(new_free), PACK(diff,0));
-		add_to_free(HDRP(new_free), new_free);
+		add_to_free( new_free);
 		PUT(HDRP(ptr), PACK(asize, 1));
 		PUT(FTRP(ptr), PACK(asize, 1));
 		return ptr;
@@ -478,8 +437,17 @@ void *mm_realloc(void *ptr, size_t size) {
 				remove_from_free(next_block);
 				PUT(HDRP(ptr),PACK(total,1));
 				PUT(FTRP(next_block),PACK(total,1));
+				//return ptr;
+				/*diff=total-asize;
+				if(diff>=32){
+					new_free += asize;
+					PUT(HDRP(new_free),PACK(diff,0));
+					PUT(FTRP(new_free),PACK(diff,0));
+					add_to_free(new_free);
+					PUT(HDRP(ptr),PACK(asize,1));
+					PUT(FTRP(ptr),PACK(asize,1));
+				}*/
 				return ptr;
-
 			}
 
 		}else if(!GET_ALLOC(PREV_BLKP(ptr))){
@@ -494,6 +462,24 @@ void *mm_realloc(void *ptr, size_t size) {
 				temp = mm_malloc(copySize);
 				memcpy(temp, ptr,copySize);
 				memcpy(prev_block,temp,copySize);
+				mm_free(temp);
+				return prev_block;
+			}
+		}else if(!GET_ALLOC(PREV_BLKP(ptr)) && !GET_ALLOC(PREV_BLKP(ptr))){
+			prev_block = PREV_BLKP(ptr);
+			next_block = NEXT_BLKP(ptr);
+			prev_size = GET_SIZE(HDRP(prev_block));
+			next_size = GET_SIZE(HDRP(next_block));
+			total = copySize + prev_size + next_size;
+			if(total > asize){
+				remove_from_free(prev_block);
+				remove_from_free(next_block);
+				PUT(HDRP(prev_block),PACK(total,1));
+				PUT(FTRP(next_block),PACK(total,1));
+				temp = mm_malloc(copySize);
+				memcpy(temp, ptr,copySize);
+				memcpy(prev_block,temp,copySize);
+				mm_free(temp);
 				return prev_block;
 			}
 		}
@@ -519,5 +505,61 @@ void *mm_realloc(void *ptr, size_t size) {
  * Return nonzero if the heap is consistant.
  *********************************************************/
 int mm_check(void) {
+
+	int i;
+	void *ptr;
+
+	//is every free block in the free list marked as free
+	for(i=0;i<15;i++){
+		ptr=free_list[i];
+		while(ptr!=NULL){
+			if(GET_ALLOC(ptr)){
+				return 0;
+			}
+			ptr = GET(ptr+WSIZE);
+		}
+	}
+
+
+	//contiguos free blocks that escaped coalescing
+    	void *bp;
+	void *next;
+    	for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)){
+		next = NEXT_BLKP(bp);
+		if(GET_SIZE(HDRP(next))>0){
+        		if (!GET_ALLOC(HDRP(bp)) && !GET_ALLOC(HDRP(next))){
+				return 0;
+			}
+        	}
+    	}
+
+
+	int index=0;
+	//is every free block in the free list
+	for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)){
+		if(!GET_ALLOC(HDRP(bp))){
+        		index = find_index(GET_SIZE(HDRP(bp)));
+			for(i=index;i<15;i++){
+				ptr = free_list[index];
+				while(ptr!=NULL){
+					if(ptr==HDRP(bp)){
+						i=15;
+						break;
+					}else{
+						ptr=GET(ptr+WSIZE);
+					}
+				}
+			}
+			if(ptr==NULL)
+				return 0;
+		}
+    	}
+
+	//is size in header and footer same
+        for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)){
+		if(GET_SIZE(HDRP(bp))!=GET_SIZE(FTRP(bp))){
+			return 0;
+		}
+	}		
 	return 1;
 }
