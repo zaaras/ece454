@@ -4,14 +4,18 @@
  * which holds pointers to the heads of explicit lists of
  * free blocks. 
  * The index of the free_list is used to identify the size
- * of the block.
+ * of the block. The sizes are ranges between powers of 2's.
  * When the user calls malloc a block of appropriate size
  * is looked up in the segregated list, if it is found it 
  * is removed from the free list and given to the user.
  * if not found the the heap is extended and new blocks are
  * allocated.
  * When the user calls free the blocks are returned to the
- * free_list
+ * free_list and coalassed
+ * Free block:
+ * [header][ptr to head of next][ptr to head of previous][padding][footer]
+ * Allocated block:
+ * [header][data][footer]
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,7 +82,7 @@ void *free_list[15];
  * prologue and epilogue
  **********************************************************/
 int mm_init(void) {
-	int i, j;
+	int i;
 	if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *) -1)
 		return -1;
 	PUT(heap_listp, 0);                         // alignment padding
@@ -147,27 +151,27 @@ static inline void remove_from_free(void *bp) {
 
 	size_t size = GET_SIZE(HDRP(bp));
 	index = find_index(size);
-	prev = GET(bp+WSIZE);
-	next = GET(bp);
+	prev = (void *)GET((bp+WSIZE));
+	next = (void *)GET(bp);
 
 	//only item in list
 	if ((prev == NULL) && (next == NULL)) {
 		free_list[index] = NULL;
 	} //first item of list
 	else if ((prev == NULL) && (next != NULL)) {
-		PUT(next+DSIZE, NULL);
+		PUT(next+DSIZE, 0x0);
 		free_list[index] = next;
 		//last item of list
 	} else if (prev != NULL && next == NULL) {
-		PUT(prev+WSIZE, NULL);
+		PUT(prev+WSIZE, 0x0);
 	}
 	//in middle of list
 	else {
 		PUT(prev+WSIZE, next);
 		PUT(next+DSIZE, prev);
 	}
-	PUT(bp, NULL);
-	PUT(bp+WSIZE, NULL);
+	PUT(bp, 0x0);
+	PUT(bp+WSIZE, 0x0);
 }
 
 /**********************************************************
@@ -249,24 +253,19 @@ void *extend_heap(size_t words) {
 //need to implement checking bigger size blocks if not found in current size
 // look for bigger blocks and then split them
 void * find_fit(size_t asize) {
-	void *bp;
 	int index;
 	size_t curr_size;
 
 	void *head;
-	void *next;
-	void *prev;
 
 	index = find_index(asize);
-	next = NULL;
-	prev = NULL;
 
 	head = free_list[index];
 	if (head != NULL) {
 		curr_size = GET_SIZE(head);
 
 		while ((curr_size < asize) && head != NULL) {
-			head = GET(head+WSIZE);
+			head = (void*)GET(head+WSIZE);
 			if (head != NULL)
 				curr_size = GET_SIZE(head);
 		}
@@ -300,14 +299,14 @@ static inline void add_to_free(void *split) {
 
 	void *head;
 	if (free_list[index] == NULL) {
-		PUT(split, NULL);
-		PUT(split+WSIZE, NULL);
+		PUT(split, 0x0);
+		PUT(split+WSIZE, 0x0);
 		free_list[index] = HDRP(split);
 	} else {
 		head = free_list[index];
 		PUT(head+DSIZE, HDRP(split));
 		PUT(split, head);
-		PUT(split+WSIZE, NULL);
+		PUT(split+WSIZE, 0x0);
 		free_list[index] = HDRP(split);
 	}
 }/**********************************************************
@@ -410,7 +409,6 @@ void *mm_realloc(void *ptr, size_t size) {
 	size_t copySize, asize;
 
 	void *new_free;
-	void *coal_new_free;
 	new_free = ptr;
 	copySize = GET_SIZE(HDRP(oldptr));
 
@@ -437,7 +435,7 @@ void *mm_realloc(void *ptr, size_t size) {
 		return ptr;
 	//if new size is larger then old size
 	}else {
-		void *next_block, *prev_block, *temp;
+		void *next_block, *prev_block;
 		size_t next_size,prev_size;
 		int total;
 		if (!GET_ALLOC(HDRP(NEXT_BLKP(ptr)))) {
@@ -514,7 +512,7 @@ int mm_check(void) {
 			if(GET_ALLOC(ptr)){
 				return 0;
 			}
-			ptr = GET(ptr+WSIZE);
+			ptr = (void*)GET(ptr+WSIZE);
 		}
 	}
 
@@ -544,7 +542,7 @@ int mm_check(void) {
 						i=15;
 						break;
 					}else{
-						ptr=GET(ptr+WSIZE);
+						ptr=(void*)GET(ptr+WSIZE);
 					}
 				}
 			}
