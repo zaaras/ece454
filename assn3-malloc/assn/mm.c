@@ -1,12 +1,17 @@
 /*
- * This implementation replicates the implicit list implementation
- * provided in the textbook
- * "Computer Systems - A Programmer's Perspective"
- * Blocks are never coalesced or reused.
- * Realloc is implemented directly using mm_malloc and mm_free.
- *
- * NOTE TO STUDENTS: Replace this header comment with your own header
- * comment that gives a high level description of your solution.
+ * This is an implementation of malloc, free and realloc
+ * using segregated lists. We implemented a free_list array
+ * which holds pointers to the heads of explicit lists of
+ * free blocks. 
+ * The index of the free_list is used to identify the size
+ * of the block.
+ * When the user calls malloc a block of appropriate size
+ * is looked up in the segregated list, if it is found it 
+ * is removed from the free list and given to the user.
+ * if not found the the heap is extended and new blocks are
+ * allocated.
+ * When the user calls free the blocks are returned to the
+ * free_list
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,7 +93,10 @@ int mm_init(void) {
 
 	return 0;
 }
-
+/**********************************************************
+ * find_index
+ * Find the index of the size in the segregated list
+ **********************************************************/
 static inline int find_index(int size) {
 	int index = -1;
 
@@ -127,6 +135,10 @@ static inline int find_index(int size) {
 	return index;
 }
 
+/**********************************************************
+ * remove_from_free 
+ * Find and remove block pointed at by bp from the free_list
+ **********************************************************/
 static inline void remove_from_free(void *bp) {
 
 	int index;
@@ -275,6 +287,10 @@ void * find_fit(size_t asize) {
 	return head + WSIZE;
 }
 
+/**********************************************************
+ * add_to_free 
+ * Add block pointed at by split to the free_list
+ **********************************************************/
 static inline void add_to_free(void *split) {
 	int index;
 	size_t size;
@@ -298,8 +314,6 @@ static inline void add_to_free(void *split) {
  * place
  * Mark the block as allocated
  **********************************************************/
-
-//implement splitting
 void place(void* bp, size_t asize) {
 	void *split;
 	split = bp;
@@ -437,16 +451,6 @@ void *mm_realloc(void *ptr, size_t size) {
 				remove_from_free(next_block);
 				PUT(HDRP(ptr),PACK(total,1));
 				PUT(FTRP(next_block),PACK(total,1));
-				//return ptr;
-				/*diff=total-asize;
-				if(diff>=32){
-					new_free += asize;
-					PUT(HDRP(new_free),PACK(diff,0));
-					PUT(FTRP(new_free),PACK(diff,0));
-					add_to_free(new_free);
-					PUT(HDRP(ptr),PACK(asize,1));
-					PUT(FTRP(ptr),PACK(asize,1));
-				}*/
 				return ptr;
 			}
 
@@ -459,10 +463,7 @@ void *mm_realloc(void *ptr, size_t size) {
 				remove_from_free(prev_block);
 				PUT(HDRP(prev_block),PACK(total,1));
 				PUT(FTRP(ptr),PACK(total,1));
-				temp = mm_malloc(copySize);
-				memcpy(temp, ptr,copySize);
-				memcpy(prev_block,temp,copySize);
-				mm_free(temp);
+				memmove(prev_block,ptr,copySize);
 				return prev_block;
 			}
 		}else if(!GET_ALLOC(PREV_BLKP(ptr)) && !GET_ALLOC(PREV_BLKP(ptr))){
@@ -476,10 +477,7 @@ void *mm_realloc(void *ptr, size_t size) {
 				remove_from_free(next_block);
 				PUT(HDRP(prev_block),PACK(total,1));
 				PUT(FTRP(next_block),PACK(total,1));
-				temp = mm_malloc(copySize);
-				memcpy(temp, ptr,copySize);
-				memcpy(prev_block,temp,copySize);
-				mm_free(temp);
+				memmove(prev_block,ptr,copySize);
 				return prev_block;
 			}
 		}
