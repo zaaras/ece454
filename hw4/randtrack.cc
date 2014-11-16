@@ -57,99 +57,99 @@ void four_threads(int seed){
 		// skip a number of samples
 		for (k=0; k<samples_to_skip; k++){
 			rnum = rand_r((unsigned int*)&rnum);
-      		}
+		}
 
-      		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
-      		key = rnum % RAND_NUM_UPPER_BOUND;
+		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+		key = rnum % RAND_NUM_UPPER_BOUND;
 
-     	 	// if this sample has not been counted before
-      		if (!(s = h.lookup(key))){
-	
+		// if this sample has not been counted before
+		if (!(s = h.lookup(key))){
+
 			// insert a new element for it into the hash table
 			s = new sample(key);
 			h.insert(s);
-      		}
+		}
 
-      		// increment the count for the sample
-     	 	s->count++;
-    	}
+		// increment the count for the sample
+		s->count++;
+	}
 }
 
 int main (int argc, char* argv[]){
-  int i,j,k;
-  int rnum;
-  unsigned key;
-  sample *s;
+	int i,j,k;
+	int rnum;
+	unsigned key;
+	sample *s;
 
-  // Print out team information
-  printf( "Team Name: %s\n", team.team );
-  printf( "\n" );
-  printf( "Student 1 Name: %s\n", team.name1 );
-  printf( "Student 1 Student Number: %s\n", team.number1 );
-  printf( "Student 1 Email: %s\n", team.email1 );
-  printf( "\n" );
-  printf( "Student 2 Name: %s\n", team.name2 );
-  printf( "Student 2 Student Number: %s\n", team.number2 );
-  printf( "Student 2 Email: %s\n", team.email2 );
-  printf( "\n" );
+	// Print out team information
+	printf( "Team Name: %s\n", team.team );
+	printf( "\n" );
+	printf( "Student 1 Name: %s\n", team.name1 );
+	printf( "Student 1 Student Number: %s\n", team.number1 );
+	printf( "Student 1 Email: %s\n", team.email1 );
+	printf( "\n" );
+	printf( "Student 2 Name: %s\n", team.name2 );
+	printf( "Student 2 Student Number: %s\n", team.number2 );
+	printf( "Student 2 Email: %s\n", team.email2 );
+	printf( "\n" );
 
-  // Parse program arguments
-  if (argc != 3){
-    printf("Usage: %s <num_threads> <samples_to_skip>\n", argv[0]);
-    exit(1);  
-  }
-  sscanf(argv[1], " %d", &num_threads); // not used in this single-threaded version
-  sscanf(argv[2], " %d", &samples_to_skip);
+	// Parse program arguments
+	if (argc != 3){
+		printf("Usage: %s <num_threads> <samples_to_skip>\n", argv[0]);
+		exit(1);  
+	}
+	sscanf(argv[1], " %d", &num_threads); // not used in this single-threaded version
+	sscanf(argv[2], " %d", &samples_to_skip);
 
-  // initialize a 16K-entry (2**14) hash of empty lists
-  h.setup(14);
+	// initialize a 16K-entry (2**14) hash of empty lists
+	h.setup(14);
 	/*pthread_t thrd[4];
 
-	if(num_threads==4){
-		for(i=0;i<4;i++){
-			pthread_create(&thrd[i],NULL,&four_threads,i);
+	  if(num_threads==4){
+	  for(i=0;i<4;i++){
+	  pthread_create(&thrd[i],NULL,&four_threads,i);
+	  }
+	  }*/
+	// process streams starting with different initial numbers
+	for (i=0; i<NUM_SEED_STREAMS; i++){
+		rnum = i;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			if (!(s = h.lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				h.insert(s);
+			}
+
+			// increment the count for the sample
+			s->count++;
 		}
-	}*/
-  // process streams starting with different initial numbers
-  for (i=0; i<NUM_SEED_STREAMS; i++){
-    rnum = i;
+	}
 
-    // collect a number of samples
-    for (j=0; j<SAMPLES_TO_COLLECT; j++){
-
-      // skip a number of samples
-      for (k=0; k<samples_to_skip; k++){
-	rnum = rand_r((unsigned int*)&rnum);
-      }
-
-      // force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
-      key = rnum % RAND_NUM_UPPER_BOUND;
-
-      // if this sample has not been counted before
-      if (!(s = h.lookup(key))){
-	
-	// insert a new element for it into the hash table
-	s = new sample(key);
-	h.insert(s);
-      }
-
-      // increment the count for the sample
-      s->count++;
-    }
-  }
-
-  // print a list of the frequency of all samples
-  h.print();
+	// print a list of the frequency of all samples
+	h.print();
 }
 
-void twoThreads(){
+void twoThreads(int seed){
 	int i,j,k;
 	int rnum;
 	unsigned key;
 	sample *s;
 
 	// process streams starting with different initial numbers
-	for (i=0; i<NUM_SEED_STREAMS/2; i++){
+	for (i=seed; i<(NUM_SEED_STREAMS/2)+seed; i++){
 		rnum = i;
 
 		// collect a number of samples
