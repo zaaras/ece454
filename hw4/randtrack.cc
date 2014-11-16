@@ -14,15 +14,15 @@
  * Please fill in the following team struct 
  */
 team_t team = {
-    "Team Name",                  /* Team name */
+	"Team Name",                  /* Team name */
 
-    "AAA BBB",                    /* First member full name */
-    "9999999999",                 /* First member student number */
-    "AAABBB@CCC",                 /* First member email address */
+	"AAA BBB",                    /* First member full name */
+	"9999999999",                 /* First member student number */
+	"AAABBB@CCC",                 /* First member email address */
 
-    "",                           /* Second member full name */
-    "",                           /* Second member student number */
-    ""                            /* Second member email address */
+	"",                           /* Second member full name */
+	"",                           /* Second member student number */
+	""                            /* Second member email address */
 };
 
 unsigned num_threads;
@@ -31,14 +31,14 @@ unsigned samples_to_skip;
 class sample;
 
 class sample {
-  unsigned my_key;
- public:
-  sample *next;
-  unsigned count;
+	unsigned my_key;
+	public:
+	sample *next;
+	unsigned count;
 
-  sample(unsigned the_key){my_key = the_key; count = 0;};
-  unsigned key(){return my_key;}
-  void print(FILE *f){printf("%d %d\n",my_key,count);}
+	sample(unsigned the_key){my_key = the_key; count = 0;};
+	unsigned key(){return my_key;}
+	void print(FILE *f){printf("%d %d\n",my_key,count);}
 };
 
 // This instantiates an empty hash table
@@ -139,4 +139,40 @@ int main (int argc, char* argv[]){
 
   // print a list of the frequency of all samples
   h.print();
+}
+
+void twoThreads(){
+	int i,j,k;
+	int rnum;
+	unsigned key;
+	sample *s;
+
+
+	// process streams starting with different initial numbers
+	for (i=0; i<NUM_SEED_STREAMS/2; i++){
+		rnum = i;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			if (!(s = h.lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				h.insert(s);
+			}
+
+			// increment the count for the sample
+			s->count++;
+		}
+	}
 }
