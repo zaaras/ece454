@@ -56,7 +56,14 @@ void *twoThreads(void* seed){
 	unsigned key;
 	sample *s;
 
-	rnum = *((int *)seed)-1;
+	rnum = *((int *)seed);
+
+	if(rnum==0){
+		rnum = *((int *)seed) - 1;
+	}else{
+		rnum*=2;
+		rnum-=1;
+	}
 
 #ifdef GL
 	if (pthread_mutex_init(&lock, NULL) != 0){
