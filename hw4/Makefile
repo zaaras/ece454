@@ -12,10 +12,10 @@ randtrack_tm: list.h hash.h defs.h randtrack.cc
 
 
 randtrack_global_lock: list.h hash.h defs.h randtrack.cc
-	$(CC) $(CFLAGS) -fgnu-tm -DGL  randtrack.cc -o randtrack_global_lock
+	$(CC) $(CFLAGS) -DGL  randtrack.cc -o randtrack_global_lock
 
 randtrack_list_lock: list.h hash.h defs.h randtrack.cc
-	$(CC) $(CFLAGS) -fgnu-tm -DLLL  randtrack.cc -o randtrack_list_lock
+	$(CC) $(CFLAGS) -DLLL  randtrack.cc -o randtrack_list_lock
 
 
 clean:
