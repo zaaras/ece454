@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "defs.h"
 #include "hash.h"
@@ -114,7 +115,6 @@ void twoThreads(){
 	int rnum;
 	unsigned key;
 	sample *s;
-
 
 	// process streams starting with different initial numbers
 	for (i=0; i<NUM_SEED_STREAMS/2; i++){
