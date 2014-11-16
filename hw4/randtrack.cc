@@ -103,14 +103,23 @@ int main (int argc, char* argv[]){
 
 	// initialize a 16K-entry (2**14) hash of empty lists
 	h.setup(14);
-	/*pthread_t thrd[4];
 
-	  if(num_threads==4){
-	  for(i=0;i<4;i++){
-	  pthread_create(&thrd[i],NULL,&four_threads,i);
-	  }
-	  }*/
+	pthread_t *thrd;
+
+	if(num_threads==4){
+		for(i=0;i<4;i++){
+			pthread_create(&thrd[i],NULL,&four_threads,i);
+		}
+	}
+
+
+	if(num_threads==2){
+		for(i=0;i<4;i++){
+			pthread_create(&thrd[i],NULL,&four_threads,i);
+		}
+	}
 	// process streams starting with different initial numbers
+	if(num_threads==1){
 	for (i=0; i<NUM_SEED_STREAMS; i++){
 		rnum = i;
 
@@ -138,6 +147,7 @@ int main (int argc, char* argv[]){
 		}
 	}
 
+	}
 	// print a list of the frequency of all samples
 	h.print();
 }
