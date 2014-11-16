@@ -29,6 +29,8 @@ team_t team = {
 unsigned num_threads;
 unsigned samples_to_skip;
 
+pthread_mutex_t lock;
+
 class sample;
 
 class sample {
@@ -55,6 +57,43 @@ void *twoThreads(void* seed){
 	sample *s;
 
 	rnum = *((int *)seed)-1;
+
+#ifdef GL
+	if (pthread_mutex_init(&lock, NULL) != 0){
+    		printf("\n mutex init failed\n");
+		}
+	// process streams starting with different initial numbers
+		for (i=0; i<(NUM_SEED_STREAMS/2); i++){
+			rnum++;
+
+			// collect a number of samples
+			for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+				// skip a number of samples
+				for (k=0; k<samples_to_skip; k++){
+					rnum = rand_r((unsigned int*)&rnum);
+				}
+
+				// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+				key = rnum % RAND_NUM_UPPER_BOUND;
+
+				// if this sample has not been counted before
+				pthread_mutex_lock(&lock);
+				if (!(s = h.lookup(key))){
+
+					// insert a new element for it into the hash table
+					s = new sample(key);
+					h.insert(s);
+				}
+
+				// increment the count for the sample
+				s->count++;
+				pthread_mutex_unlock(&lock);
+			
+			}
+		}
+		pthread_mutex_destroy(&lock);
+#endif
 
 #ifdef TM
 
@@ -86,10 +125,12 @@ void *twoThreads(void* seed){
 				s->count++;
 			}
 		}
+
 	}
 #endif
 
 }
+
 
 void *four_threads(void* seed){
 	int i,j,k,key;
@@ -97,31 +138,67 @@ void *four_threads(void* seed){
 	int rnum;
 	rnum = *((int *)seed);
 
-#ifdef TM
-
-	for (j=0; j<SAMPLES_TO_COLLECT; j++){
-		// skip a number of samples
-		for (k=0; k<samples_to_skip; k++){
-			rnum = rand_r((unsigned int*)&rnum);
+#ifdef GL
+	if (pthread_mutex_init(&lock, NULL) != 0){
+    		printf("\n mutex init failed\n");
 		}
 
-		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
-		key = rnum % RAND_NUM_UPPER_BOUND;
-		__transaction_atomic { 
-			// if this sample has not been counted before
-			if (!(s = h.lookup(key))){
+			// collect a number of samples
+			for (j=0; j<SAMPLES_TO_COLLECT; j++){
 
-				// insert a new element for it into the hash table
-				s = new sample(key);
-				h.insert(s);
+				// skip a number of samples
+				for (k=0; k<samples_to_skip; k++){
+					rnum = rand_r((unsigned int*)&rnum);
+				}
+
+				// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+				key = rnum % RAND_NUM_UPPER_BOUND;
+
+				// if this sample has not been counted before
+				pthread_mutex_lock(&lock);
+				if (!(s = h.lookup(key))){
+
+					// insert a new element for it into the hash table
+					s = new sample(key);
+					h.insert(s);
+				}
+
+				// increment the count for the sample
+				s->count++;
+				pthread_mutex_unlock(&lock);
+			
 			}
-
-			// increment the count for the sample
-			s->count++;
-		}
-	}
+		
+		pthread_mutex_destroy(&lock);
 #endif
 
+#ifdef TM
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			__transaction_atomic { 
+				if (!(s = h.lookup(key))){
+
+					// insert a new element for it into the hash table
+					s = new sample(key);
+					h.insert(s);
+				}
+
+				// increment the count for the sample
+				s->count++;
+			}
+		}
+#endif
 }
 
 int main (int argc, char* argv[]){
@@ -162,6 +239,10 @@ int main (int argc, char* argv[]){
 
 			pthread_join(thrd[i],NULL);
 		}
+
+		for( i=0; i<4; i++ ){
+ 	 		pthread_join(thrd[i], NULL);
+ 		}
 	}
 
 
@@ -206,6 +287,7 @@ int main (int argc, char* argv[]){
 	}
 	// print a list of the frequency of all samples
 	h.print();
+
 }
 
 
