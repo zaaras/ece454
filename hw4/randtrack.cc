@@ -159,8 +159,11 @@ int main (int argc, char* argv[]){
 		thrd = new pthread_t[2];
 		for(i=0;i<2;i++){
 			pthread_create(&thrd[i],NULL,&twoThreads,(void *)&i);
+
+			pthread_join(thrd[i],NULL);
 		}
 	}
+
 	// process streams starting with different initial numbers
 	if(num_threads==1){
 		for (i=0; i<NUM_SEED_STREAMS; i++){
