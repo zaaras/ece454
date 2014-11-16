@@ -148,6 +148,10 @@ int main (int argc, char* argv[]){
 		for(i=0;i<4;i++){
 			pthread_create(&thrd[i],NULL,&four_threads,(void *)&i);
 		}
+
+		for( i=0; i<4; i++ ){
+ 	 		pthread_join(thrd[i], NULL);
+ 		}
 	}
 
 
