@@ -48,7 +48,7 @@ class sample {
 // key value is "unsigned".  
 hash<sample,unsigned> h;
 
-void twoThreads(void* seed){
+void *twoThreads(void* seed){
 	int i,j,k;
 	int rnum;
 	unsigned key;
@@ -85,7 +85,7 @@ void twoThreads(void* seed){
 	}
 }
 
-void four_threads(void* seed){
+void *four_threads(void* seed){
 	int i,j,k,key;
 	sample *s;
 	int rnum;
@@ -146,7 +146,7 @@ int main (int argc, char* argv[]){
 	if(num_threads==4){
 		thrd = new pthread_t[4];
 		for(i=0;i<4;i++){
-			pthread_create(&thrd[i],NULL,&four_threads,&i);
+			pthread_create(&thrd[i],NULL,&four_threads,(void *)&i);
 		}
 	}
 
