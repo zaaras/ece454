@@ -1,4 +1,4 @@
-
+#include<pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -47,8 +47,34 @@ class sample {
 // key value is "unsigned".  
 hash<sample,unsigned> h;
 
-int  
-main (int argc, char* argv[]){
+void four_threads(int seed){
+	int i,j,k,key;
+	sample *s;
+	int rnum;
+	rnum = seed;
+	for (j=0; j<SAMPLES_TO_COLLECT; j++){
+		// skip a number of samples
+		for (k=0; k<samples_to_skip; k++){
+			rnum = rand_r((unsigned int*)&rnum);
+      		}
+
+      		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+      		key = rnum % RAND_NUM_UPPER_BOUND;
+
+     	 	// if this sample has not been counted before
+      		if (!(s = h.lookup(key))){
+	
+			// insert a new element for it into the hash table
+			s = new sample(key);
+			h.insert(s);
+      		}
+
+      		// increment the count for the sample
+     	 	s->count++;
+    	}
+}
+
+int main (int argc, char* argv[]){
   int i,j,k;
   int rnum;
   unsigned key;
@@ -76,7 +102,13 @@ main (int argc, char* argv[]){
 
   // initialize a 16K-entry (2**14) hash of empty lists
   h.setup(14);
+	/*pthread_t thrd[4];
 
+	if(num_threads==4){
+		for(i=0;i<4;i++){
+			pthread_create(&thrd[i],NULL,&four_threads,i);
+		}
+	}*/
   // process streams starting with different initial numbers
   for (i=0; i<NUM_SEED_STREAMS; i++){
     rnum = i;
