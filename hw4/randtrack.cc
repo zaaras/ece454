@@ -1,4 +1,4 @@
-#include<pthread.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -57,13 +57,10 @@ void *twoThreads(void* seed){
 	sample *s;
 
 	rnum = *((int *)seed);
+	//rnum-=1;
 
-	if(rnum==0){
-		rnum = *((int *)seed) - 1;
-	}else{
-		rnum*=2;
-		rnum-=1;
-	}
+
+	
 
 #ifdef GL
 	if (pthread_mutex_init(&lock, NULL) != 0){
@@ -144,6 +141,8 @@ void *four_threads(void* seed){
 	sample *s;
 	int rnum;
 	rnum = *((int *)seed);
+
+		printf("%d\n", rnum);
 
 #ifdef GL
 	if (pthread_mutex_init(&lock, NULL) != 0){
@@ -278,8 +277,6 @@ int main (int argc, char* argv[]){
 		thrd = new pthread_t[4];
 		for(i=0;i<4;i++){
 			pthread_create(&thrd[i],NULL,&four_threads,(void *)&i);
-
-			pthread_join(thrd[i],NULL);
 		}
 
 		for( i=0; i<4; i++ ){
@@ -291,10 +288,13 @@ int main (int argc, char* argv[]){
 	if(num_threads==2){
 		thrd = new pthread_t[2];
 		for(i=0;i<2;i++){
+			printf("%d\n", i);
 			pthread_create(&thrd[i],NULL,&twoThreads,(void *)&i);
-
-			pthread_join(thrd[i],NULL);
 		}
+
+		for( i=0; i<2; i++ ){
+ 	 		pthread_join(thrd[i], NULL);
+ 		}
 	}
 
 	// process streams starting with different initial numbers
@@ -328,7 +328,7 @@ int main (int argc, char* argv[]){
 
 	}
 	// print a list of the frequency of all samples
-	h.print();
+	//h.print();
 
 }
 
