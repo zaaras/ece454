@@ -30,7 +30,7 @@ unsigned num_threads;
 unsigned samples_to_skip;
 
 pthread_mutex_t lock;
-pthread_mutex_t *lock_list = new pthread_mutex_t[1<<14];
+
 class sample;
 
 class sample {
@@ -57,9 +57,7 @@ void *twoThreads(void* seed){
 	sample *s;
 
 	rnum = *((int *)seed);
-	//rnum-=1;
-
-
+	rnum-=1;
 	
 
 #ifdef GL
@@ -142,8 +140,6 @@ void *four_threads(void* seed){
 	int rnum;
 	rnum = *((int *)seed);
 
-		printf("%d\n", rnum);
-
 #ifdef GL
 	if (pthread_mutex_init(&lock, NULL) != 0){
     		printf("\n mutex init failed\n");
@@ -205,41 +201,6 @@ void *four_threads(void* seed){
 			}
 		}
 #endif
-#ifdef LLL
-	if (pthread_mutex_init(&lock, NULL) != 0){
-    		printf("\n mutex init failed\n");
-		}
-
-			// collect a number of samples
-			for (j=0; j<SAMPLES_TO_COLLECT; j++){
-
-				// skip a number of samples
-				for (k=0; k<samples_to_skip; k++){
-					rnum = rand_r((unsigned int*)&rnum);
-				}
-
-				// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
-				key = rnum % RAND_NUM_UPPER_BOUND;
-
-				// if this sample has not been counted before
-				pthread_mutex_lock(&lock);
-				if (!(s = h.lookup(key))){
-
-					// insert a new element for it into the hash table
-					s = new sample(key);
-					h.insert(s);
-				}
-
-				// increment the count for the sample
-				s->count++;
-				pthread_mutex_unlock(&lock);
-			
-			}
-		
-		pthread_mutex_destroy(&lock);
-#endif
-
-
 }
 
 int main (int argc, char* argv[]){
@@ -272,11 +233,15 @@ int main (int argc, char* argv[]){
 	h.setup(14);
 
 	pthread_t *thrd;
+	int *tmp;
 
 	if(num_threads==4){
 		thrd = new pthread_t[4];
+		
 		for(i=0;i<4;i++){
-			pthread_create(&thrd[i],NULL,&four_threads,(void *)&i);
+			tmp = new int;
+			*tmp = i;
+			pthread_create(&thrd[i],NULL,&four_threads,(void *)tmp);
 		}
 
 		for( i=0; i<4; i++ ){
@@ -288,8 +253,9 @@ int main (int argc, char* argv[]){
 	if(num_threads==2){
 		thrd = new pthread_t[2];
 		for(i=0;i<2;i++){
-			printf("%d\n", i);
-			pthread_create(&thrd[i],NULL,&twoThreads,(void *)&i);
+			tmp = new int;
+			*tmp = i*2;
+			pthread_create(&thrd[i],NULL,&twoThreads,(void *)tmp);
 		}
 
 		for( i=0; i<2; i++ ){
@@ -328,7 +294,7 @@ int main (int argc, char* argv[]){
 
 	}
 	// print a list of the frequency of all samples
-	//h.print();
+	h.print();
 
 }
 
