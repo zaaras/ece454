@@ -48,11 +48,48 @@ class sample {
 // key value is "unsigned".  
 hash<sample,unsigned> h;
 
-void four_threads(int seed){
+void twoThreads(void* seed){
+	int i,j,k;
+	int rnum;
+	unsigned key;
+	sample *s;
+
+	rnum = (int)seed-1;
+
+	// process streams starting with different initial numbers
+	for (i=0; i<(NUM_SEED_STREAMS/2); i++){
+		rnum++;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			if (!(s = h.lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				h.insert(s);
+			}
+
+			// increment the count for the sample
+			s->count++;
+		}
+	}
+}
+
+void four_threads(void* seed){
 	int i,j,k,key;
 	sample *s;
 	int rnum;
-	rnum = seed;
+	rnum = (int)seed;
 	for (j=0; j<SAMPLES_TO_COLLECT; j++){
 		// skip a number of samples
 		for (k=0; k<samples_to_skip; k++){
@@ -109,81 +146,49 @@ int main (int argc, char* argv[]){
 	if(num_threads==4){
 		thrd = new pthread_t[4];
 		for(i=0;i<4;i++){
-			pthread_create(&thrd[i],NULL,&four_threads,i);
+			pthread_create(&thrd[i],NULL,&four_threads,(void *)i);
 		}
 	}
 
 
 	if(num_threads==2){
-		for(i=0;i<4;i++){
-			pthread_create(&thrd[i],NULL,&four_threads,i);
+		thrd = new pthread_t[2];
+		for(i=0;i<2;i++){
+			pthread_create(&thrd[i],NULL,&twoThreads,(void *)i);
 		}
 	}
 	// process streams starting with different initial numbers
 	if(num_threads==1){
-	for (i=0; i<NUM_SEED_STREAMS; i++){
-		rnum = i;
+		for (i=0; i<NUM_SEED_STREAMS; i++){
+			rnum = i;
 
-		// collect a number of samples
-		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+			// collect a number of samples
+			for (j=0; j<SAMPLES_TO_COLLECT; j++){
 
-			// skip a number of samples
-			for (k=0; k<samples_to_skip; k++){
-				rnum = rand_r((unsigned int*)&rnum);
+				// skip a number of samples
+				for (k=0; k<samples_to_skip; k++){
+					rnum = rand_r((unsigned int*)&rnum);
+				}
+
+				// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+				key = rnum % RAND_NUM_UPPER_BOUND;
+
+				// if this sample has not been counted before
+				if (!(s = h.lookup(key))){
+
+					// insert a new element for it into the hash table
+					s = new sample(key);
+					h.insert(s);
+				}
+
+				// increment the count for the sample
+				s->count++;
 			}
-
-			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
-			key = rnum % RAND_NUM_UPPER_BOUND;
-
-			// if this sample has not been counted before
-			if (!(s = h.lookup(key))){
-
-				// insert a new element for it into the hash table
-				s = new sample(key);
-				h.insert(s);
-			}
-
-			// increment the count for the sample
-			s->count++;
 		}
-	}
 
 	}
 	// print a list of the frequency of all samples
 	h.print();
 }
 
-void twoThreads(int seed){
-	int i,j,k;
-	int rnum;
-	unsigned key;
-	sample *s;
 
-	// process streams starting with different initial numbers
-	for (i=seed; i<(NUM_SEED_STREAMS/2)+seed; i++){
-		rnum = i;
-
-		// collect a number of samples
-		for (j=0; j<SAMPLES_TO_COLLECT; j++){
-
-			// skip a number of samples
-			for (k=0; k<samples_to_skip; k++){
-				rnum = rand_r((unsigned int*)&rnum);
-			}
-
-			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
-			key = rnum % RAND_NUM_UPPER_BOUND;
-
-			// if this sample has not been counted before
-			if (!(s = h.lookup(key))){
-
-				// insert a new element for it into the hash table
-				s = new sample(key);
-				h.insert(s);
-			}
-
-			// increment the count for the sample
-			s->count++;
-		}
-	}
-}
