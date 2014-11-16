@@ -29,6 +29,8 @@ team_t team = {
 unsigned num_threads;
 unsigned samples_to_skip;
 
+pthread_mutex_t lock;
+
 class sample;
 
 class sample {
@@ -55,7 +57,12 @@ void *twoThreads(void* seed){
 	sample *s;
 
 	rnum = *((int *)seed)-1;
-
+	
+	#ifdef GL
+		if (pthread_mutex_init(&lock, NULL) != 0){
+        		printf("\n mutex init failed\n");
+    		}
+	#endif
 	// process streams starting with different initial numbers
 	for (i=0; i<(NUM_SEED_STREAMS/2); i++){
 		rnum++;
@@ -72,24 +79,40 @@ void *twoThreads(void* seed){
 			key = rnum % RAND_NUM_UPPER_BOUND;
 
 			// if this sample has not been counted before
+			#ifdef GL
+				pthread_mutex_lock(&lock);
+			#endif
 			if (!(s = h.lookup(key))){
 
 				// insert a new element for it into the hash table
 				s = new sample(key);
 				h.insert(s);
 			}
-
+			#ifdef GL
+				pthread_mutex_unlock(&lock);
+			#endif
 			// increment the count for the sample
 			s->count++;
 		}
 	}
+	#ifdef GL
+		pthread_mutex_destroy(&lock);
+	#endif
 }
+
 
 void *four_threads(void* seed){
 	int i,j,k,key;
 	sample *s;
 	int rnum;
 	rnum = *((int *)seed);
+
+	#ifdef GL
+		if (pthread_mutex_init(&lock, NULL) != 0){
+        		printf("\n mutex init failed\n");
+    		}
+	#endif
+
 	for (j=0; j<SAMPLES_TO_COLLECT; j++){
 		// skip a number of samples
 		for (k=0; k<samples_to_skip; k++){
@@ -98,7 +121,10 @@ void *four_threads(void* seed){
 
 		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
 		key = rnum % RAND_NUM_UPPER_BOUND;
-
+		
+		#ifdef GL
+		pthread_mutex_lock(&lock);
+		#endif
 		// if this sample has not been counted before
 		if (!(s = h.lookup(key))){
 
@@ -106,10 +132,16 @@ void *four_threads(void* seed){
 			s = new sample(key);
 			h.insert(s);
 		}
+		#ifdef GL
+		pthread_mutex_unlock(&lock);
+		#endif
 
 		// increment the count for the sample
 		s->count++;
 	}
+	#ifdef GL
+		pthread_mutex_destroy(&lock);
+	#endif
 }
 
 int main (int argc, char* argv[]){
@@ -196,6 +228,7 @@ int main (int argc, char* argv[]){
 	}
 	// print a list of the frequency of all samples
 	h.print();
+
 }
 
 
