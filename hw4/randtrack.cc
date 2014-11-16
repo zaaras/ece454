@@ -30,7 +30,7 @@ unsigned num_threads;
 unsigned samples_to_skip;
 
 pthread_mutex_t lock;
-
+pthread_mutex_t *lock_list = new pthread_mutex_t[1<<14];
 class sample;
 
 class sample {
@@ -206,6 +206,41 @@ void *four_threads(void* seed){
 			}
 		}
 #endif
+#ifdef LLL
+	if (pthread_mutex_init(&lock, NULL) != 0){
+    		printf("\n mutex init failed\n");
+		}
+
+			// collect a number of samples
+			for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+				// skip a number of samples
+				for (k=0; k<samples_to_skip; k++){
+					rnum = rand_r((unsigned int*)&rnum);
+				}
+
+				// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+				key = rnum % RAND_NUM_UPPER_BOUND;
+
+				// if this sample has not been counted before
+				pthread_mutex_lock(&lock);
+				if (!(s = h.lookup(key))){
+
+					// insert a new element for it into the hash table
+					s = new sample(key);
+					h.insert(s);
+				}
+
+				// increment the count for the sample
+				s->count++;
+				pthread_mutex_unlock(&lock);
+			
+			}
+		
+		pthread_mutex_destroy(&lock);
+#endif
+
+
 }
 
 int main (int argc, char* argv[]){
