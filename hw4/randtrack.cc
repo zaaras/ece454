@@ -67,8 +67,7 @@ void *twoThreads(void* seed){
     		printf("\n mutex init failed\n");
 		}
 	// process streams starting with different initial numbers
-		for (i=0; i<(NUM_SEED_STREAMS/2); i++){
-			rnum++;
+		for (i=0; i<2; i++){
 
 			// collect a number of samples
 			for (j=0; j<SAMPLES_TO_COLLECT; j++){
@@ -102,8 +101,7 @@ void *twoThreads(void* seed){
 #ifdef TM
 
 	// process streams starting with different initial numbers
-	for (i=0; i<(NUM_SEED_STREAMS/2); i++){
-		rnum++;
+	for (i=0; i<2; i++){
 
 		// collect a number of samples
 		for (j=0; j<SAMPLES_TO_COLLECT; j++){
@@ -142,7 +140,6 @@ void *four_threads(void* seed){
 	int rnum;
 	rnum = *((int *)seed);
 
-		printf("%d\n", rnum);
 
 #ifdef GL
 	if (pthread_mutex_init(&lock, NULL) != 0){
@@ -284,12 +281,12 @@ int main (int argc, char* argv[]){
  		}
 	}
 
-
+	int arg=0;
 	if(num_threads==2){
 		thrd = new pthread_t[2];
 		for(i=0;i<2;i++){
-			printf("%d\n", i);
-			pthread_create(&thrd[i],NULL,&twoThreads,(void *)&i);
+			pthread_create(&thrd[i],NULL,&twoThreads,(void *)&arg);
+			arg+=2;
 		}
 
 		for( i=0; i<2; i++ ){
