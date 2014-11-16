@@ -56,6 +56,8 @@ void *twoThreads(void* seed){
 
 	rnum = *((int *)seed)-1;
 
+#ifdef TM
+
 	// process streams starting with different initial numbers
 	for (i=0; i<(NUM_SEED_STREAMS/2); i++){
 		rnum++;
@@ -72,6 +74,41 @@ void *twoThreads(void* seed){
 			key = rnum % RAND_NUM_UPPER_BOUND;
 
 			// if this sample has not been counted before
+			__transaction_atomic { 
+				if (!(s = h.lookup(key))){
+
+					// insert a new element for it into the hash table
+					s = new sample(key);
+					h.insert(s);
+				}
+
+				// increment the count for the sample
+				s->count++;
+			}
+		}
+	}
+#endif
+
+}
+
+void *four_threads(void* seed){
+	int i,j,k,key;
+	sample *s;
+	int rnum;
+	rnum = *((int *)seed);
+
+#ifdef TM
+
+	for (j=0; j<SAMPLES_TO_COLLECT; j++){
+		// skip a number of samples
+		for (k=0; k<samples_to_skip; k++){
+			rnum = rand_r((unsigned int*)&rnum);
+		}
+
+		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+		key = rnum % RAND_NUM_UPPER_BOUND;
+		__transaction_atomic { 
+			// if this sample has not been counted before
 			if (!(s = h.lookup(key))){
 
 				// insert a new element for it into the hash table
@@ -83,33 +120,8 @@ void *twoThreads(void* seed){
 			s->count++;
 		}
 	}
-}
+#endif
 
-void *four_threads(void* seed){
-	int i,j,k,key;
-	sample *s;
-	int rnum;
-	rnum = *((int *)seed);
-	for (j=0; j<SAMPLES_TO_COLLECT; j++){
-		// skip a number of samples
-		for (k=0; k<samples_to_skip; k++){
-			rnum = rand_r((unsigned int*)&rnum);
-		}
-
-		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
-		key = rnum % RAND_NUM_UPPER_BOUND;
-
-		// if this sample has not been counted before
-		if (!(s = h.lookup(key))){
-
-			// insert a new element for it into the hash table
-			s = new sample(key);
-			h.insert(s);
-		}
-
-		// increment the count for the sample
-		s->count++;
-	}
 }
 
 int main (int argc, char* argv[]){
@@ -147,6 +159,8 @@ int main (int argc, char* argv[]){
 		thrd = new pthread_t[4];
 		for(i=0;i<4;i++){
 			pthread_create(&thrd[i],NULL,&four_threads,(void *)&i);
+
+			pthread_join(thrd[i],NULL);
 		}
 	}
 
