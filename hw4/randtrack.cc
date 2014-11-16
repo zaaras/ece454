@@ -54,7 +54,7 @@ void twoThreads(void* seed){
 	unsigned key;
 	sample *s;
 
-	rnum = (int)seed-1;
+	rnum = *((int *)seed)-1;
 
 	// process streams starting with different initial numbers
 	for (i=0; i<(NUM_SEED_STREAMS/2); i++){
@@ -89,7 +89,7 @@ void four_threads(void* seed){
 	int i,j,k,key;
 	sample *s;
 	int rnum;
-	rnum = (int)seed;
+	rnum = *((int *)seed);
 	for (j=0; j<SAMPLES_TO_COLLECT; j++){
 		// skip a number of samples
 		for (k=0; k<samples_to_skip; k++){
@@ -146,7 +146,7 @@ int main (int argc, char* argv[]){
 	if(num_threads==4){
 		thrd = new pthread_t[4];
 		for(i=0;i<4;i++){
-			pthread_create(&thrd[i],NULL,&four_threads,(void *)i);
+			pthread_create(&thrd[i],NULL,&four_threads,&i);
 		}
 	}
 
@@ -154,7 +154,7 @@ int main (int argc, char* argv[]){
 	if(num_threads==2){
 		thrd = new pthread_t[2];
 		for(i=0;i<2;i++){
-			pthread_create(&thrd[i],NULL,&twoThreads,(void *)i);
+			pthread_create(&thrd[i],NULL,&twoThreads,(void *)&i);
 		}
 	}
 	// process streams starting with different initial numbers
