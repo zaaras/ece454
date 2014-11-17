@@ -42,6 +42,9 @@ class sample {
 	unsigned count;
 
 	sample(unsigned the_key){my_key = the_key; count = 0;};
+	sample(const sample &other){my_key = other.my_key; count = other.count; next = other.next;};
+	sample(const sample *other){my_key = other->my_key; count = other->count; next = other->next;};
+	sample(){my_key = 0; count = 0; next = NULL;};
 	unsigned key(){return my_key;}
 	void print(FILE *f){printf("%d %d\n",my_key,count);}
 };
@@ -79,6 +82,7 @@ void *twoThreads(void* seed){
 			key = rnum % RAND_NUM_UPPER_BOUND;
 
 			// if this sample has not been counted before
+			h.lockList(key);
 			if (!(s = h.lookup(key))){
 
 				// insert a new element for it into the hash table
@@ -88,6 +92,7 @@ void *twoThreads(void* seed){
 
 			// increment the count for the sample
 			s->count++;
+			h.unlockList(key);
 
 		}
 	}
@@ -189,6 +194,7 @@ void *four_threads(void* seed){
 
 		// if this sample has not been counted before
 
+		h.lockList(key);
 		if (!(s = h.lookup(key))){
 
 			// insert a new element for it into the hash table
@@ -198,6 +204,7 @@ void *four_threads(void* seed){
 
 		// increment the count for the sample
 		s->count++;
+		h.unlockList(key);
 
 	}	
 #endif
