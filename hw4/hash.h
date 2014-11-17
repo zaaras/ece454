@@ -9,7 +9,7 @@
 
 #define HASH_INDEX(_addr,_size_mask) (((_addr) >> 2) & (_size_mask))
 
-#ifdef LLL
+#if defined(LLL) || defined(ELL)
   static std::vector<pthread_mutex_t> locks;
   static pthread_mutex_t lock;
 #endif
@@ -36,6 +36,13 @@ template<class Ele, class Keytype> class hash {
   void lockList(Keytype the_key);
   void unlockList(Keytype the_key);
 #endif 
+
+#ifdef ELL
+  void lockList(Keytype the_key);
+  void unlockList(Keytype the_key);
+   void lockElement(Keytype the_key);
+  void unlockElement(Keytype the_key);
+#endif 
 };
 
 template<class Ele, class Keytype> 
@@ -46,7 +53,7 @@ hash<Ele,Keytype>::setup(unsigned the_size_log){
   my_size_mask = (1 << my_size_log) - 1;
   entries = new list<Ele,Keytype>[my_size];
 
-#ifdef LLL
+#if defined(LLL) || defined(ELL)
   size_t i;
   std::vector<pthread_mutex_t>::iterator it;
   it = locks.begin();
