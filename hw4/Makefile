@@ -5,7 +5,7 @@ CFLAGS = -O3 -pthread
 all: randtrack randtrack_tm randtrack_global_lock randtrack_list_lock 
 
 randtrack: list.h hash.h defs.h randtrack.cc
-	$(CC) $(CFLAGS) randtrack.cc -o randtrack
+	$(CC) $(CFLAGS) -DELL randtrack.cc -o randtrack
 
 randtrack_tm: list.h hash.h defs.h randtrack.cc
 	$(CC) $(CFLAGS) -fgnu-tm -DTM  randtrack.cc -o randtrack_tm
