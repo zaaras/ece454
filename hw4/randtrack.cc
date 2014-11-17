@@ -54,6 +54,7 @@ class sample {
 // the element and key value here: element is "class sample" and
 // key value is "unsigned".  
 hash<sample,unsigned> h;
+hash<sample,unsigned> hash_array[4];
 
 void *twoThreads(void* seed){
 	int i,j,k;
@@ -61,9 +62,40 @@ void *twoThreads(void* seed){
 	unsigned key;
 	sample *s;
 	int *tmp;
-
 	tmp = new int(*(int *)seed);
 	(*tmp)--;
+
+#ifdef RED
+	for (i=0; i<2; i++){
+		(*tmp)++;
+		rnum=*tmp;
+
+
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			if (!(s = hash_array[*tmp].lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				hash_array[*tmp].insert(s);
+			}
+			
+			// increment the count for the sample
+			s->count++;
+
+		}
+	}
+#endif
+
 
 #ifdef ELL
 	for (i=0; i<2; i++){
@@ -214,6 +246,32 @@ void *four_threads(void* seed){
 	sample *s;
 	int rnum;
 	rnum = *((int *)seed);
+	int thread_num = rnum;
+
+#ifdef RED
+	for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+		// skip a number of samples
+		for (k=0; k<samples_to_skip; k++){
+			rnum = rand_r((unsigned int*)&rnum);
+		}
+
+		// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+		key = rnum % RAND_NUM_UPPER_BOUND;
+
+		// if this sample has not been counted before
+		if (!(s = hash_array[thread_num].lookup(key))){
+
+			// insert a new element for it into the hash table
+			s = new sample(key);
+			hash_array[thread_num].insert(s);
+		}
+			
+		// increment the count for the sample
+		s->count++;
+
+	}
+#endif
 
 #ifdef ELL
 
@@ -342,6 +400,28 @@ void *four_threads(void* seed){
 #endif
 }
 
+void combine_and_print(){
+	hash<sample, unsigned> final;
+	final.setup(14);
+
+	sample *s;
+	sample *f;
+	
+	int i,j;
+	for (i = 0; i < RAND_NUM_UPPER_BOUND; i++){
+		for(j=0;j<4;j++){
+			if(s=hash_array[j].lookup(i)){
+				if(!(f=final.lookup(i))){
+					f = new sample(i);
+					final.insert(f);
+				}
+				f->count += s->count;
+			}	
+		}
+	}
+	final.print();
+}
+
 int main (int argc, char* argv[]){
 	int i,j,k;
 	int rnum;
@@ -370,7 +450,10 @@ int main (int argc, char* argv[]){
 
 	// initialize a 16K-entry (2**14) hash of empty lists
 	h.setup(14);
-
+	for(i=0;i<4;i++){
+		hash_array[i].setup(14);
+	}
+	
 	pthread_t *thrd;
 	int *tmp;
 
@@ -391,6 +474,7 @@ int main (int argc, char* argv[]){
 	int arg=0;
 	if(num_threads==2){
 		thrd = new pthread_t[2];
+
 		for(i=0;i<2;i++){
 			tmp = new int;
 			*tmp = i*2;
@@ -432,8 +516,17 @@ int main (int argc, char* argv[]){
 		}
 
 	}
+
+	#ifdef RED
+		if(num_threads!=1)
+			combine_and_print();
+		else
+			h.print();
+	#endif
 	// print a list of the frequency of all samples
-	h.print();
+	#ifndef RED 
+		h.print();
+	#endif
 
 }
 
