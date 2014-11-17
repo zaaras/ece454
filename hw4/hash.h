@@ -63,6 +63,36 @@ hash<Ele,Keytype>::setup(unsigned the_size_log){
 
 }
 
+#ifdef ELL
+template<class Ele, class Keytype> 
+void
+hash<Ele,Keytype>::lockList(Keytype the_key){
+  list<Ele,Keytype> *l;  
+  l->lockElement(the_key);
+}
+
+template<class Ele, class Keytype> 
+void
+hash<Ele,Keytype>::unlockList(Keytype the_key){
+  list<Ele,Keytype> *l;  
+  l->unlockElement(the_key);
+}
+
+template<class Ele, class Keytype> 
+void
+hash<Ele,Keytype>::lockElement(Keytype the_key){
+  list<Ele,Keytype> *l;  
+  pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+}
+
+template<class Ele, class Keytype> 
+void
+hash<Ele,Keytype>::unlockElement(Keytype the_key){
+  list<Ele,Keytype> *l;  
+  pthread_mutex_unlock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+} 
+#endif
+
 #ifdef LLL
 template<class Ele, class Keytype> 
 void

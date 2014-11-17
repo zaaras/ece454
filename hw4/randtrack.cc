@@ -65,6 +65,41 @@ void *twoThreads(void* seed){
 	tmp = new int(*(int *)seed);
 	(*tmp)--;
 
+#ifdef ELL
+	for (i=0; i<2; i++){
+		(*tmp)++;
+		rnum=*tmp;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			h.lockList(key);
+			if (!(s = h.lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				h.insert(s);
+			}
+			h.unlockList(key);
+
+			h.lockElement(key);
+			// increment the count for the sample
+			s->count++;
+			h.unlockElement(key);
+
+		}
+	}
+#endif
+
 #ifdef LLL
 	for (i=0; i<2; i++){
 		(*tmp)++;
