@@ -2,10 +2,10 @@
 CC = g++-4.7
 CFLAGS = -O3 -pthread
 
-all: randtrack randtrack_tm randtrack_global_lock randtrack_list_lock 
+all: randtrack randtrack_tm randtrack_global_lock randtrack_list_lock randtrack_element_lock 
 
 randtrack: list.h hash.h defs.h randtrack.cc
-	$(CC) $(CFLAGS) -DELL randtrack.cc -o randtrack
+	$(CC) $(CFLAGS)  randtrack.cc -o randtrack
 
 randtrack_tm: list.h hash.h defs.h randtrack.cc
 	$(CC) $(CFLAGS) -fgnu-tm -DTM  randtrack.cc -o randtrack_tm
@@ -17,6 +17,8 @@ randtrack_global_lock: list.h hash.h defs.h randtrack.cc
 randtrack_list_lock: list.h hash.h defs.h randtrack.cc
 	$(CC) $(CFLAGS) -DLLL  randtrack.cc -o randtrack_list_lock
 
+randtrack_element_lock: list.h hash.h defs.h randtrack.cc
+	$(CC) $(CFLAGS) -DELL  randtrack.cc -o randtrack_element_lock
 
 clean:
-	rm -f *.o randtrack randtrack_global_lock randtrack_tm randtrack_list_lock
+	rm -f *.o randtrack randtrack_global_lock randtrack_tm randtrack_list_lock  randtrack_element_lock
