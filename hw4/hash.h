@@ -89,14 +89,14 @@ template<class Ele, class Keytype>
 void
 hash<Ele,Keytype>::lockElement(Keytype the_key){
   list<Ele,Keytype> *l;  
-  pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+  l->lockElement(the_key);
 }
 
 template<class Ele, class Keytype> 
 void
 hash<Ele,Keytype>::unlockElement(Keytype the_key){
   list<Ele,Keytype> *l;  
-  pthread_mutex_unlock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+  l->unlockElement(the_key);
 } 
 #endif
 

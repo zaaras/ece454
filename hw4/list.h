@@ -35,8 +35,8 @@ template<class Ele, class Keytype> class list {
   void cleanup();
 
 #ifdef ELL
-  std::vector<pthread_mutex_t> locks;
-  pthread_mutex_t lock;
+  std::vector<pthread_mutex_t> elementLocks;
+  pthread_mutex_t elementLock;
 
   void lockElement(Keytype the_key);
   void unlockElement(Keytype the_key);
@@ -58,12 +58,10 @@ list<Ele,Keytype>::push(Ele *e){
   my_num_ele++;
 
 #ifdef ELL
-    std::vector<pthread_mutex_t>::iterator it;
-    it = locks.begin();
-    if (pthread_mutex_init(&lock, NULL) != 0){
+    if (pthread_mutex_init(&elementLock, NULL) != 0){
       printf("\n mutex init failed\n");
     }else{
-      it = locks.insert(it, lock);
+      elementLocks.insert(elementLocks.begin(), elementLock);
     }
 #endif
 }
@@ -79,7 +77,7 @@ list<Ele,Keytype>::lockElement(Keytype the_key){
     e_tmp = e_tmp->next;
     lockCount++;
   }
-  pthread_mutex_unlock(&locks[lockCount]);
+  pthread_mutex_lock(&elementLocks[lockCount]);
 
 }
 
@@ -93,7 +91,7 @@ list<Ele,Keytype>::unlockElement(Keytype the_key){
     e_tmp = e_tmp->next;
     lockCount++;
   }
-  pthread_mutex_lock(&locks[lockCount]);
+  pthread_mutex_unlock(&elementLocks[lockCount]);
 
 }
 #endif
