@@ -77,7 +77,6 @@ list<Ele,Keytype>::lockElement(Keytype the_key){
     e_tmp = e_tmp->next;
     lockCount++;
   }
-  printf("unlocking %d\n",lockCount);
   pthread_mutex_lock(&elementLocks[lockCount]);
 
 }
@@ -92,7 +91,6 @@ list<Ele,Keytype>::unlockElement(Keytype the_key){
     e_tmp = e_tmp->next;
     lockCount++;
   }
-   printf("locking %d\n",lockCount);
   pthread_mutex_unlock(&elementLocks[lockCount]);
 
 }
