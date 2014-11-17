@@ -3,6 +3,8 @@
 #define HASH_H
 
 #include <stdio.h>
+#include <pthread.h>
+#include <vector>
 #include "list.h"
 
 #define HASH_INDEX(_addr,_size_mask) (((_addr) >> 2) & (_size_mask))
@@ -16,6 +18,10 @@ template<class Ele, class Keytype> class hash {
   unsigned my_size_mask;
   list<Ele,Keytype> *entries;
   list<Ele,Keytype> *get_list(unsigned the_idx);
+#ifdef LLL
+  std::vector<pthread_mutex_t> locks;
+  pthread_mutex_t lock;
+#endif
 
  public:
   void setup(unsigned the_size_log=5);
@@ -33,6 +39,22 @@ hash<Ele,Keytype>::setup(unsigned the_size_log){
   my_size = 1 << my_size_log;
   my_size_mask = (1 << my_size_log) - 1;
   entries = new list<Ele,Keytype>[my_size];
+
+#ifdef LLL
+  size_t i;
+  std::vector<pthread_mutex_t>::iterator it;
+  it = locks.begin();
+
+  for(i=0;i<my_size;i++){
+    if (pthread_mutex_init(&lock, NULL) != 0){
+      printf("\n mutex init failed\n");
+    }else{
+      it = locks.insert(it, lock);
+    }
+
+  }
+#endif
+
 }
 
 template<class Ele, class Keytype> 
@@ -49,9 +71,20 @@ template<class Ele, class Keytype>
 Ele *
 hash<Ele,Keytype>::lookup(Keytype the_key){
   list<Ele,Keytype> *l;
-
+  Ele *  tmp;
+#ifdef LLL
+    int err=pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+  if(err!=0){
+    printf("Problem : %d\n",err);
+    exit(1);
+  }
+#endif
   l = &entries[HASH_INDEX(the_key,my_size_mask)];
-  return l->lookup(the_key);
+  tmp =  l->lookup(the_key);
+#ifdef LLL
+  pthread_mutex_unlock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+#endif
+  return tmp;
 }  
 
 template<class Ele, class Keytype> 
@@ -84,7 +117,17 @@ hash<Ele,Keytype>::cleanup(){
 template<class Ele, class Keytype> 
 void 
 hash<Ele,Keytype>::insert(Ele *e){
+#ifdef LLL
+  int err=pthread_mutex_lock(&locks[HASH_INDEX(e->key(),my_size_mask)]);
+  if(err!=0){
+    printf("Problem : %d\n",err);
+    exit(1);
+  }
+#endif
   entries[HASH_INDEX(e->key(),my_size_mask)].push(e);
+#ifdef LLL
+  pthread_mutex_unlock(&locks[HASH_INDEX(e->key(),my_size_mask)]);
+#endif
 }
 
 
