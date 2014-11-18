@@ -76,6 +76,8 @@ void *twoThreads(void* seed){
 	tmp = new int(*(int *)seed);
 	(*tmp)--;
 
+	printf("two");
+
 #ifdef RED
 	for (i=0; i<2; i++){
 		(*tmp)++;
@@ -109,6 +111,7 @@ void *twoThreads(void* seed){
 
 
 #ifdef ELL
+
 	for (i=0; i<2; i++){
 		(*tmp)++;
 		rnum=*tmp;
@@ -127,21 +130,27 @@ void *twoThreads(void* seed){
 			// if this sample has not been counted before
 			//h.lockList(key);
 			//h.readLockList(key);
+
 			if (!(s = h.lookup(key))){
+
 				h.lockList(key);
 				//h.readUnlockList(key);
 				//h.upgradeLock(key);
 
+				h.lockList(key);
+
 				// insert a new element for it into the hash table
-				if (!(s = h.lookup(key))){
-					s = new sample(key);
-					h.insert(s);
-					
-				}
+				//if (!(s = h.lookup(key))){
+
+					//s = new sample(key);
+					//h.insert(s);
+				s = h.lookupInsert(key);
+				//}
+
 				h.unlockList(key);
 			}
-
 			s->add();
+			
 		}
 	}
 #endif
@@ -288,7 +297,7 @@ void *four_threads(void* seed){
 
 #ifdef ELL
 
-
+		int tmp;
 		// collect a number of samples
 		for (j=0; j<SAMPLES_TO_COLLECT; j++){
 
@@ -301,19 +310,24 @@ void *four_threads(void* seed){
 			key = rnum % RAND_NUM_UPPER_BOUND;
 
 			// if this sample has not been counted before
-			//h.lockList(key);
-			//h.readLockList(key);
 			if (!(s = h.lookup(key))){
+				// all threads need to insert key
+				// s count needs to be 0
+				// if another thread is here the lock for key is taken all other threads need to leave
+				// thread also know the key it wants to insert
+				// knows key is not in any list
+				// knows the list the key belongs in
+
 				h.lockList(key);
-				//h.readUnlockList(key);
-				//h.upgradeLock(key);
 
 				// insert a new element for it into the hash table
-				if (!(s = h.lookup(key))){
-					s = new sample(key);
-					h.insert(s);
-					
-				}
+				//if (!(s = h.lookup(key))){
+
+					//s = new sample(key);
+					//h.insert(s);
+				s = h.lookupInsert(key);
+				//}
+
 				h.unlockList(key);
 			}
 
@@ -442,7 +456,7 @@ int main (int argc, char* argv[]){
 	int rnum;
 	unsigned key;
 	sample *s;
-
+	setbuf(stdout,NULL);
 	// Print out team information
 	printf( "Team Name: %s\n", team.team );
 	printf( "\n" );
@@ -488,6 +502,7 @@ int main (int argc, char* argv[]){
 
 	int arg=0;
 	if(num_threads==2){
+
 		thrd = new pthread_t[2];
 
 		for(i=0;i<2;i++){

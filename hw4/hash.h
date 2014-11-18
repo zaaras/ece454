@@ -26,13 +26,15 @@ template<class Ele, class Keytype> class hash {
  public:
   void setup(unsigned the_size_log=5);
   void insert(Ele *e);
-  Ele *lookup(Keytype the_key);
+  inline Ele *lookup(Keytype the_key);
   void print(FILE *f=stdout);
   void reset();
   void cleanup();
 
 #if defined(LLL) || defined(ELL)
-  void lockList(Keytype the_key);
+  inline Ele* lookupInsert(Keytype fkey);
+  int testLock(Keytype the_key);
+  int lockList(Keytype the_key);
   void unlockList(Keytype the_key);
 #endif 
 };
@@ -62,9 +64,15 @@ hash<Ele,Keytype>::setup(unsigned the_size_log){
 
 #if defined(LLL) || defined(ELL)
 template<class Ele, class Keytype> 
-void
+int
 hash<Ele,Keytype>::lockList(Keytype the_key){ 
-  pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+  return pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+}
+
+template<class Ele, class Keytype> 
+int
+hash<Ele,Keytype>::testLock(Keytype the_key){ 
+  return pthread_mutex_trylock(&locks[HASH_INDEX(the_key,my_size_mask)]);
 }
 
 template<class Ele, class Keytype> 
@@ -72,6 +80,27 @@ void
 hash<Ele,Keytype>::unlockList(Keytype the_key){ 
   pthread_mutex_unlock(&locks[HASH_INDEX(the_key,my_size_mask)]);
 } 
+
+template<class Ele, class Keytype>
+inline
+Ele*
+hash<Ele,Keytype>::lookupInsert(Keytype fkey){
+	Ele *s;
+	 list<Ele,Keytype> *l;
+
+  //pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+
+  l = &entries[HASH_INDEX(fkey,my_size_mask)];
+
+  if (!(s = l->lookup(fkey))){
+	  s = new Ele(fkey);
+  	  entries[HASH_INDEX(fkey,my_size_mask)].push(s);
+  }
+
+  return s;
+  //pthread_mutex_unlock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+
+}
 #endif
 
 template<class Ele, class Keytype> 
@@ -84,13 +113,16 @@ hash<Ele,Keytype>::get_list(unsigned the_idx){
   return &entries[the_idx];
 }
 
-template<class Ele, class Keytype> 
+template<class Ele, class Keytype>
+inline
 Ele *
 hash<Ele,Keytype>::lookup(Keytype the_key){
   list<Ele,Keytype> *l;  
   l = &entries[HASH_INDEX(the_key,my_size_mask)];
   return  l->lookup(the_key);
 }  
+
+
 
 template<class Ele, class Keytype> 
 void 
