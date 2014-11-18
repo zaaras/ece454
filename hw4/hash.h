@@ -11,6 +11,7 @@
 
 #if defined(LLL) || defined(ELL)
   static pthread_mutex_t *locks;
+  static pthread_rwlock_t *readLocks ;
 #endif
 
 template<class Ele, class Keytype> class hash;
@@ -31,15 +32,16 @@ template<class Ele, class Keytype> class hash {
   void reset();
   void cleanup();
 
-#ifdef LLL
+#if defined(LLL) || defined(ELL)
   void lockList(Keytype the_key);
   void unlockList(Keytype the_key);
+  void readLockList(Keytype the_key);
+  void readUnlockList(Keytype the_key);
+  void upgradeLock(Keytype the_key);
 #endif 
 
 #ifdef ELL
-  void lockList(Keytype the_key);
-  void unlockList(Keytype the_key);
-   void lockElement(Keytype the_key);
+  void lockElement(Keytype the_key);
   void unlockElement(Keytype the_key);
 #endif 
 };
@@ -57,30 +59,21 @@ hash<Ele,Keytype>::setup(unsigned the_size_log){
   //std::vector<pthread_mutex_t>::iterator it;
   //it = locks.begin();
   locks = new pthread_mutex_t[my_size];
+  readLocks = new pthread_rwlock_t[my_size];
   for(i=0;i<my_size;i++){
     if (pthread_mutex_init(&locks[i], NULL) != 0){
       printf("\n mutex init failed\n");
     }
+    if (pthread_rwlock_init(&readLocks[i], NULL) != 0){
+      printf("\n rwlock init failed\n");
+    }
   }
+
 #endif
 
 }
 
 #ifdef ELL
-template<class Ele, class Keytype> 
-void
-hash<Ele,Keytype>::lockList(Keytype the_key){
-  list<Ele,Keytype> *l;  
-  pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
-}
-
-template<class Ele, class Keytype> 
-void
-hash<Ele,Keytype>::unlockList(Keytype the_key){
-  list<Ele,Keytype> *l;  
-  pthread_mutex_unlock(&locks[HASH_INDEX(the_key,my_size_mask)]);
-}
-
 template<class Ele, class Keytype> 
 void
 hash<Ele,Keytype>::lockElement(Keytype the_key){
@@ -96,21 +89,38 @@ hash<Ele,Keytype>::unlockElement(Keytype the_key){
     l = &entries[HASH_INDEX(the_key,my_size_mask)];
   l->unlockElement(the_key);
 } 
+
 #endif
 
-#ifdef LLL
+#if defined(LLL) || defined(ELL)
 template<class Ele, class Keytype> 
 void
-hash<Ele,Keytype>::lockList(Keytype the_key){
-  list<Ele,Keytype> *l;  
+hash<Ele,Keytype>::lockList(Keytype the_key){ 
   pthread_mutex_lock(&locks[HASH_INDEX(the_key,my_size_mask)]);
 }
 
 template<class Ele, class Keytype> 
 void
-hash<Ele,Keytype>::unlockList(Keytype the_key){
-  list<Ele,Keytype> *l;  
+hash<Ele,Keytype>::unlockList(Keytype the_key){ 
   pthread_mutex_unlock(&locks[HASH_INDEX(the_key,my_size_mask)]);
+} 
+
+template<class Ele, class Keytype> 
+void
+hash<Ele,Keytype>::readLockList(Keytype the_key){
+  pthread_rwlock_rdlock(&readLocks[HASH_INDEX(the_key,my_size_mask)]);
+}
+
+template<class Ele, class Keytype> 
+void
+hash<Ele,Keytype>::readUnlockList(Keytype the_key){ 
+  pthread_rwlock_unlock(&readLocks[HASH_INDEX(the_key,my_size_mask)]);
+}
+
+template<class Ele, class Keytype> 
+void
+hash<Ele,Keytype>::upgradeLock(Keytype the_key){
+  pthread_rwlock_wrlock(&readLocks[HASH_INDEX(the_key,my_size_mask)]);
 } 
 #endif
 

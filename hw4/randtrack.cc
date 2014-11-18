@@ -121,8 +121,10 @@ void *twoThreads(void* seed){
 				s = new sample(key);
 				h.insert(s);
 			}
-			h.lockElement(key);
+			
 			h.unlockList(key);
+
+			h.lockElement(key);
 
 			
 			// increment the count for the sample
@@ -288,17 +290,27 @@ void *four_threads(void* seed){
 			key = rnum % RAND_NUM_UPPER_BOUND;
 
 			// if this sample has not been counted before
-			h.lockList(key);
+			//h.lockList(key);
+			h.readLockList(key);
 			if (!(s = h.lookup(key))){
+				//h.lockList(key);
+				h.readUnlockList(key);
+				h.upgradeLock(key);
+
 
 				// insert a new element for it into the hash table
 				s = new sample(key);
 				h.insert(s);
+				//h.unlockList(key);
+				
 			}
-			h.lockElement(key);
-			h.unlockList(key);
-
+				
+			h.readUnlockList(key);
 			
+			h.lockElement(key);
+			
+			
+
 			// increment the count for the sample
 			s->count++;
 			h.unlockElement(key);
