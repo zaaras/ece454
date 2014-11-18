@@ -297,19 +297,18 @@ void *four_threads(void* seed){
 				h.readUnlockList(key);
 				h.upgradeLock(key);
 
-
 				// insert a new element for it into the hash table
-				s = new sample(key);
-				h.insert(s);
-				//h.unlockList(key);
+				if (!(s = h.lookup(key))){
+					s = new sample(key);
+					h.insert(s);
+					//h.unlockList(key);
+				}
 				
 			}
 				
 			h.readUnlockList(key);
 			
 			h.lockElement(key);
-			
-			
 
 			// increment the count for the sample
 			s->count++;
