@@ -35,11 +35,6 @@ template<class Ele, class Keytype> class hash {
   void lockList(Keytype the_key);
   void unlockList(Keytype the_key);
 #endif 
-
-#ifdef ELL
-  void lockElement(Keytype the_key);
-  void unlockElement(Keytype the_key);
-#endif 
 };
 
 template<class Ele, class Keytype> 
@@ -64,25 +59,6 @@ hash<Ele,Keytype>::setup(unsigned the_size_log){
 #endif
 
 }
-
-#ifdef ELL
-template<class Ele, class Keytype> 
-void
-hash<Ele,Keytype>::lockElement(Keytype the_key){
-  list<Ele,Keytype> *l;  
-    l = &entries[HASH_INDEX(the_key,my_size_mask)];
-  l->lockElement(the_key);
-}
-
-template<class Ele, class Keytype> 
-void
-hash<Ele,Keytype>::unlockElement(Keytype the_key){
-  list<Ele,Keytype> *l;  
-    l = &entries[HASH_INDEX(the_key,my_size_mask)];
-  l->unlockElement(the_key);
-} 
-
-#endif
 
 #if defined(LLL) || defined(ELL)
 template<class Ele, class Keytype> 
