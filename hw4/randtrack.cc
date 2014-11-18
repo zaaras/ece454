@@ -10,9 +10,9 @@
 #define RAND_NUM_UPPER_BOUND   100000
 #define NUM_SEED_STREAMS            4
 
-/* 
- * ECE454 Students: 
- * Please fill in the following team struct 
+/*
+ * ECE454 Students:
+ * Please fill in the following team struct
  */
 team_t team = {
 	"Team Name",                  /* Team name */
@@ -51,7 +51,7 @@ class sample {
 #endif
 #ifndef ELL
 	sample(unsigned the_key){my_key = the_key; count = 0;};
-#endif	
+#endif
 	sample(const sample &other){my_key = other.my_key; count = other.count; next = other.next;};
 	sample(const sample *other){my_key = other->my_key; count = other->count; next = other->next;};
 	sample(){my_key = 0; count = 0; next = NULL;};
@@ -63,9 +63,193 @@ class sample {
 // This instantiates an empty hash table
 // it is a C++ template, which means we define the types for
 // the element and key value here: element is "class sample" and
-// key value is "unsigned".  
+// key value is "unsigned".
 hash<sample,unsigned> h;
 hash<sample,unsigned> hash_array[4];
+
+void *oneThreads(void*){
+	int i,j,k;
+	int rnum;
+	unsigned key;
+	sample *s;
+
+#ifdef RED
+	for (i=0; i<4; i++){
+
+		rnum=i;
+
+
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			if (!(s = hash_array[i].lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				hash_array[i].insert(s);
+			}
+
+			// increment the count for the sample
+			s->count++;
+
+		}
+	}
+#endif
+
+
+#ifdef ELL
+
+	for (i=0; i<4; i++){
+		rnum=i;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			//h.lockList(key);
+			//h.readLockList(key);
+
+			if (!(s = h.lookup(key))){
+
+				h.lockList(key);
+				//h.readUnlockList(key);
+				//h.upgradeLock(key);
+				// insert a new element for it into the hash table
+				//if (!(s = h.lookup(key))){
+
+					//s = new sample(key);
+					//h.insert(s);
+				s = h.lookupInsert(key);
+				//}
+
+				h.unlockList(key);
+			}
+			s->add();
+
+		}
+	}
+#endif
+
+#ifdef LLL
+	for (i=0; i<4; i++){
+		rnum=i;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			h.lockList(key);
+			if (!(s = h.lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				h.insert(s);
+			}
+
+			// increment the count for the sample
+			s->count++;
+			h.unlockList(key);
+
+		}
+	}
+#endif
+
+#ifdef GL
+	if (pthread_mutex_init(&lock, NULL) != 0){
+		printf("\n mutex init failed\n");
+	}
+	// process streams starting with different initial numbers
+	for (i=0; i<4; i++){
+		rnum=i;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			pthread_mutex_lock(&lock);
+			if (!(s = h.lookup(key))){
+
+				// insert a new element for it into the hash table
+				s = new sample(key);
+				h.insert(s);
+			}
+
+			// increment the count for the sample
+			s->count++;
+			pthread_mutex_unlock(&lock);
+
+		}
+	}
+	pthread_mutex_destroy(&lock);
+#endif
+
+#ifdef TM
+
+	// process streams starting with different initial numbers
+	for (i=0; i<4; i++){
+		rnum=i;
+
+		// collect a number of samples
+		for (j=0; j<SAMPLES_TO_COLLECT; j++){
+
+			// skip a number of samples
+			for (k=0; k<samples_to_skip; k++){
+				rnum = rand_r((unsigned int*)&rnum);
+			}
+
+			// force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
+			key = rnum % RAND_NUM_UPPER_BOUND;
+
+			// if this sample has not been counted before
+			__transaction_atomic {
+				if (!(s = h.lookup(key))){
+
+					// insert a new element for it into the hash table
+					s = new sample(key);
+					h.insert(s);
+				}
+
+				// increment the count for the sample
+				s->count++;
+			}
+		}
+	}
+#endif
+
+}
+
 
 void *twoThreads(void* seed){
 	int i,j,k;
@@ -99,7 +283,7 @@ void *twoThreads(void* seed){
 				s = new sample(key);
 				hash_array[*tmp].insert(s);
 			}
-			
+
 			// increment the count for the sample
 			s->count++;
 
@@ -145,7 +329,7 @@ void *twoThreads(void* seed){
 				h.unlockList(key);
 			}
 			s->add();
-			
+
 		}
 	}
 #endif
@@ -240,7 +424,7 @@ void *twoThreads(void* seed){
 			key = rnum % RAND_NUM_UPPER_BOUND;
 
 			// if this sample has not been counted before
-			__transaction_atomic { 
+			__transaction_atomic {
 				if (!(s = h.lookup(key))){
 
 					// insert a new element for it into the hash table
@@ -283,7 +467,7 @@ void *four_threads(void* seed){
 			s = new sample(key);
 			hash_array[thread_num].insert(s);
 		}
-			
+
 		// increment the count for the sample
 		s->count++;
 
@@ -328,7 +512,7 @@ void *four_threads(void* seed){
 
 			s->add();
 		}
-	
+
 #endif
 
 	//printf("%d\n", rnum);
@@ -358,7 +542,7 @@ void *four_threads(void* seed){
 		s->count++;
 		h.unlockList(key);
 
-	}	
+	}
 #endif
 
 #ifdef GL
@@ -409,7 +593,7 @@ void *four_threads(void* seed){
 		key = rnum % RAND_NUM_UPPER_BOUND;
 
 		// if this sample has not been counted before
-		__transaction_atomic { 
+		__transaction_atomic {
 			if (!(s = h.lookup(key))){
 
 				// insert a new element for it into the hash table
@@ -430,7 +614,7 @@ void combine_and_print(){
 
 	sample *s;
 	sample *f;
-	
+
 	int i,j;
 	for (i = 0; i < RAND_NUM_UPPER_BOUND; i++){
 		for(j=0;j<4;j++){
@@ -440,7 +624,7 @@ void combine_and_print(){
 					final.insert(f);
 				}
 				f->count += s->count;
-			}	
+			}
 		}
 	}
 	final.print();
@@ -467,7 +651,7 @@ int main (int argc, char* argv[]){
 	// Parse program arguments
 	if (argc != 3){
 		printf("Usage: %s <num_threads> <samples_to_skip>\n", argv[0]);
-		exit(1);  
+		exit(1);
 	}
 	sscanf(argv[1], " %d", &num_threads); // not used in this single-threaded version
 	sscanf(argv[2], " %d", &samples_to_skip);
@@ -477,7 +661,7 @@ int main (int argc, char* argv[]){
 	for(i=0;i<4;i++){
 		hash_array[i].setup(14);
 	}
-	
+
 	pthread_t *thrd;
 	int *tmp;
 
@@ -513,7 +697,14 @@ int main (int argc, char* argv[]){
 
 	// process streams starting with different initial numbers
 	if(num_threads==1){
-		for (i=0; i<NUM_SEED_STREAMS; i++){
+
+		pthread_t tmpT;
+
+		pthread_create(&tmpT,NULL,&oneThreads,NULL);
+
+		pthread_join(tmpT, NULL);
+
+		/*for (i=0; i<NUM_SEED_STREAMS; i++){
 			rnum = i;
 
 			// collect a number of samples
@@ -538,7 +729,7 @@ int main (int argc, char* argv[]){
 				// increment the count for the sample
 				s->count++;
 			}
-		}
+		}*/
 
 	}
 
@@ -549,7 +740,7 @@ int main (int argc, char* argv[]){
 			h.print();
 	#endif
 	// print a list of the frequency of all samples
-	#ifndef RED 
+	#ifndef RED
 		h.print();
 	#endif
 
