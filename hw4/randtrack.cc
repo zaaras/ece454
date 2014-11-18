@@ -47,6 +47,11 @@ class sample {
 	sample(){my_key = 0; count = 0; next = NULL;};
 	unsigned key(){return my_key;}
 	void print(FILE *f){printf("%d %d\n",my_key,count);}
+
+#ifdef ELL
+	 pthread_mutex_t lock;
+#endif
+
 };
 
 // This instantiates an empty hash table
@@ -291,22 +296,22 @@ void *four_threads(void* seed){
 
 			// if this sample has not been counted before
 			//h.lockList(key);
-			h.readLockList(key);
+			//h.readLockList(key);
 			if (!(s = h.lookup(key))){
-				//h.lockList(key);
-				h.readUnlockList(key);
-				h.upgradeLock(key);
+				h.lockList(key);
+				//h.readUnlockList(key);
+				//h.upgradeLock(key);
 
 				// insert a new element for it into the hash table
 				if (!(s = h.lookup(key))){
 					s = new sample(key);
 					h.insert(s);
-					//h.unlockList(key);
+					
 				}
-				
+				h.unlockList(key);
 			}
-				
-			h.readUnlockList(key);
+
+			//h.readUnlockList(key);
 			
 			h.lockElement(key);
 

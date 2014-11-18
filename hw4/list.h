@@ -58,11 +58,12 @@ list<Ele,Keytype>::push(Ele *e){
   my_num_ele++;
 
 #ifdef ELL
-    if (pthread_mutex_init(&elementLock, NULL) != 0){
+    if (pthread_mutex_init(&(e->lock), NULL) != 0){
       printf("\n mutex init failed\n");
-    }else{
-      elementLocks.insert(elementLocks.begin(), elementLock);
     }
+    /*else{
+      elementLocks.insert(elementLocks.begin(), elementLock);
+    }*/
 #endif
 }
 
@@ -71,13 +72,15 @@ template<class Ele, class Keytype>
 void 
 list<Ele,Keytype>::lockElement(Keytype the_key){
   Ele *e_tmp = my_head;
-  size_t lockCount = 0;
+  //size_t lockCount = 0;
 
   while (e_tmp && (e_tmp->key() != the_key)){
     e_tmp = e_tmp->next;
-    lockCount++;
+    //lockCount++;
   }
-  pthread_mutex_lock(&elementLocks[lockCount]);
+
+  //pthread_mutex_lock(&elementLocks[lockCount]);
+  pthread_mutex_lock(&(e_tmp->lock));
 
 }
 
@@ -85,13 +88,14 @@ template<class Ele, class Keytype>
 void 
 list<Ele,Keytype>::unlockElement(Keytype the_key){
   Ele *e_tmp = my_head;
-  size_t lockCount = 0;
+  //size_t lockCount = 0;
 
   while (e_tmp && (e_tmp->key() != the_key)){
     e_tmp = e_tmp->next;
-    lockCount++;
+    //lockCount++;
   }
-  pthread_mutex_unlock(&elementLocks[lockCount]);
+  pthread_mutex_unlock(&(e_tmp->lock));
+  //pthread_mutex_unlock(&elementLocks[lockCount]);
 
 }
 #endif

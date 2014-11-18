@@ -108,7 +108,7 @@ hash<Ele,Keytype>::unlockList(Keytype the_key){
 template<class Ele, class Keytype> 
 void
 hash<Ele,Keytype>::readLockList(Keytype the_key){
-  pthread_rwlock_rdlock(&readLocks[HASH_INDEX(the_key,my_size_mask)]);
+  pthread_rwlock_tryrdlock(&readLocks[HASH_INDEX(the_key,my_size_mask)]);
 }
 
 template<class Ele, class Keytype> 
