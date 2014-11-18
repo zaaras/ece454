@@ -76,8 +76,6 @@ void *twoThreads(void* seed){
 	tmp = new int(*(int *)seed);
 	(*tmp)--;
 
-	printf("two");
-
 #ifdef RED
 	for (i=0; i<2; i++){
 		(*tmp)++;
@@ -136,9 +134,6 @@ void *twoThreads(void* seed){
 				h.lockList(key);
 				//h.readUnlockList(key);
 				//h.upgradeLock(key);
-
-				h.lockList(key);
-
 				// insert a new element for it into the hash table
 				//if (!(s = h.lookup(key))){
 
