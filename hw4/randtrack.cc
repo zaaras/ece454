@@ -40,17 +40,23 @@ class sample {
 	public:
 	sample *next;
 	unsigned count;
-
+#ifdef ELL
+	pthread_mutex_t lock;
+	sample(unsigned the_key){my_key = the_key; count = 0; pthread_mutex_init(&lock,NULL);};
+	void add(){
+		pthread_mutex_lock(&lock);
+		count++;
+		pthread_mutex_unlock(&lock);
+	}
+#endif
+#ifndef ELL
 	sample(unsigned the_key){my_key = the_key; count = 0;};
+#endif	
 	sample(const sample &other){my_key = other.my_key; count = other.count; next = other.next;};
 	sample(const sample *other){my_key = other->my_key; count = other->count; next = other->next;};
 	sample(){my_key = 0; count = 0; next = NULL;};
 	unsigned key(){return my_key;}
 	void print(FILE *f){printf("%d %d\n",my_key,count);}
-
-#ifdef ELL
-	 pthread_mutex_t lock;
-#endif
 
 };
 
@@ -130,7 +136,6 @@ void *twoThreads(void* seed){
 			h.unlockList(key);
 
 			h.lockElement(key);
-
 			
 			// increment the count for the sample
 			s->count++;
@@ -311,14 +316,7 @@ void *four_threads(void* seed){
 				h.unlockList(key);
 			}
 
-			//h.readUnlockList(key);
-			
-			h.lockElement(key);
-
-			// increment the count for the sample
-			s->count++;
-			h.unlockElement(key);
-
+			s->add();
 		}
 	
 #endif
