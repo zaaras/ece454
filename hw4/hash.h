@@ -10,7 +10,8 @@
 #define HASH_INDEX(_addr,_size_mask) (((_addr) >> 2) & (_size_mask))
 
 #if defined(LLL) || defined(ELL)
-  static std::vector<pthread_mutex_t> locks;
+  //static std::vector<pthread_mutex_t> locks;
+  static pthread_mutex_t *locks;
   static pthread_mutex_t lock;
 #endif
 
@@ -55,14 +56,15 @@ hash<Ele,Keytype>::setup(unsigned the_size_log){
 
 #if defined(LLL) || defined(ELL)
   size_t i;
-  std::vector<pthread_mutex_t>::iterator it;
-  it = locks.begin();
-
+  //std::vector<pthread_mutex_t>::iterator it;
+  //it = locks.begin();
+  locks = new pthread_mutex_t[my_size];
   for(i=0;i<my_size;i++){
     if (pthread_mutex_init(&lock, NULL) != 0){
       printf("\n mutex init failed\n");
     }else{
-      it = locks.insert(it, lock);
+      //it = locks.insert(it, lock);
+      locks[i] = lock;
     }
 
   }
