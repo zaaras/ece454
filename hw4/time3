@@ -1,0 +1,14 @@
+echo "list lock 1 thread"
+time ./randtrack_list_lock 1 50 > rt1.out
+echo "list lock 2 thread"
+time ./randtrack_list_lock 2 50 > rt2.out
+echo "list lock 4 thread"
+time ./randtrack_list_lock 4 50 > rt4.out
+
+echo "list lock 1 thread"
+time ./randtrack_list_lock 1 50 > rt1.out
+echo "list lock 2 thread"
+time ./randtrack_list_lock 2 50 > rt2.out
+echo "list lock 4 thread"
+time ./randtrack_list_lock 4 50 > rt4.out
+

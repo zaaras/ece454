@@ -1,0 +1,29 @@
+echo "global lock 1 thread"
+time ./randtrack_global_lock 1 50 > rt1.out
+
+echo "global lock 1 thread"
+time ./randtrack_global_lock 1 50 > rt1.out
+
+echo "tm 1 thread"
+time ./randtrack_tm 1 50 > rt1.out
+
+echo "tm 1 thread"
+time ./randtrack_tm 1 50 > rt1.out
+
+echo "list lock 1 thread"
+time ./randtrack_list_lock 1 50 > rt1.out
+
+echo "list lock 1 thread"
+time ./randtrack_list_lock 1 50 > rt1.out
+
+echo "element lock 1 thread"
+time ./randtrack_element_lock 1 50 > rt1.out
+
+echo "element lock 1 thread"
+time ./randtrack_element_lock 1 50 > rt1.out
+
+echo "reduction 1 thread"
+time ./randtrack_reduction 1 50 > rt1.out
+
+echo "reduction 1 thread"
+time ./randtrack_reduction 1 50 > rt1.out

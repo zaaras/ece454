@@ -1,0 +1,16 @@
+./randtrack_global_lock 1 50 > rt1.out
+./randtrack_global_lock 2 50 > rt2.out
+./randtrack_global_lock 4 50 > rt4.out
+
+echo "global lock"
+sort -n rt1.out > rt1.outs
+sort -n rt2.out > rt2.outs
+sort -n rt4.out > rt4.outs
+
+echo "1 and 2"
+diff rt1.outs rt2.outs
+echo "1 and 4"
+diff rt1.outs rt4.outs
+echo "2 and 4"
+diff rt2.outs rt4.outs
+

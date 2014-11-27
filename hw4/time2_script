@@ -1,0 +1,69 @@
+echo "global lock 1 thread"
+time ./randtrack_global_lock 1 100 > rt1.out
+echo "global lock 2 thread"
+time ./randtrack_global_lock 2 100 > rt2.out
+echo "global_lock 4 thread"
+time ./randtrack_global_lock 4 100 > rt4.out
+
+echo "global lock 1 thread"
+time ./randtrack_global_lock 1 100 > rt1.out
+echo "global lock 2 thread"
+time ./randtrack_global_lock 2 100 > rt2.out
+echo "global_lock 4 thread"
+time ./randtrack_global_lock 4 100 > rt4.out
+
+echo "tm 1 thread"
+time ./randtrack_tm 1 100 > rt1.out
+echo "tm 2 thread"
+time ./randtrack_tm 2 100 > rt2.out
+echo "tm 4 thread"
+time ./randtrack_tm 4 100 > rt4.out
+
+echo "tm 1 thread"
+time ./randtrack_tm 1 100 > rt1.out
+echo "tm 2 thread"
+time ./randtrack_tm 2 100 > rt2.out
+echo "tm 4 thread"
+time ./randtrack_tm 4 100 > rt4.out
+
+echo "list lock 1 thread"
+time ./randtrack_list_lock 1 100 > rt1.out
+echo "list lock 2 thread"
+time ./randtrack_list_lock 2 100 > rt2.out
+echo "list lock 4 thread"
+time ./randtrack_list_lock 4 100 > rt4.out
+
+echo "list lock 1 thread"
+time ./randtrack_list_lock 1 100 > rt1.out
+echo "list lock 2 thread"
+time ./randtrack_list_lock 2 100 > rt2.out
+echo "list lock 4 thread"
+time ./randtrack_list_lock 4 100 > rt4.out
+
+echo "element lock 1 thread"
+time ./randtrack_element_lock 1 100 > rt1.out
+echo "element lock 2 thread"
+time ./randtrack_element_lock 2 100 > rt2.out
+echo "element lock 4 thread"
+time ./randtrack_element_lock 4 100 > rt4.out
+
+echo "element lock 1 thread"
+time ./randtrack_element_lock 1 100 > rt1.out
+echo "element lock 2 thread"
+time ./randtrack_element_lock 2 100 > rt2.out
+echo "element lock 4 thread"
+time ./randtrack_element_lock 4 100 > rt4.out
+
+echo "reduction 1 thread"
+time ./randtrack_reduction 1 100 > rt1.out
+echo "reduction 2 thread"
+time ./randtrack_reduction 2 100 > rt2.out
+echo "reduction 4 thread"
+time ./randtrack_reduction 4 100 > rt4.out
+
+echo "reduction 1 thread"
+time ./randtrack_reduction 1 100 > rt1.out
+echo "reduction 2 thread"
+time ./randtrack_reduction 2 100 > rt2.out
+echo "reduction 4 thread"
+time ./randtrack_reduction 4 100 > rt4.out

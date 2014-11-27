@@ -1,0 +1,64 @@
+./randtrack_global_lock 1 50 > rt1.out
+./randtrack_global_lock 2 50 > rt2.out
+./randtrack_global_lock 4 50 > rt4.out
+
+echo "global lock"
+sort -n rt1.out > rt1.outs
+sort -n rt2.out > rt2.outs
+sort -n rt4.out > rt4.outs
+
+diff rt1.outs rt2.outs
+diff rt1.outs rt4.outs
+diff rt2.outs rt4.outs
+
+echo "tm"
+./randtrack_tm 1 50 > rt1.out
+./randtrack_tm 2 50 > rt2.out
+./randtrack_tm 4 50 > rt4.out
+
+sort -n rt1.out > rt1.outs
+sort -n rt2.out > rt2.outs
+sort -n rt4.out > rt4.outs
+
+diff rt1.outs rt2.outs
+diff rt1.outs rt4.outs
+diff rt2.outs rt4.outs
+
+echo "list lock"
+./randtrack_list_lock 1 50 > rt1.out
+./randtrack_list_lock 2 50 > rt2.out
+./randtrack_list_lock 4 50 > rt4.out
+
+sort -n rt1.out > rt1.outs
+sort -n rt2.out > rt2.outs
+sort -n rt4.out > rt4.outs
+
+diff rt1.outs rt2.outs
+diff rt1.outs rt4.outs
+diff rt2.outs rt4.outs
+
+echo "element lock"
+./randtrack_element_lock 1 50 > rt1.out
+./randtrack_element_lock 2 50 > rt2.out
+./randtrack_element_lock 4 50 > rt4.out
+
+sort -n rt1.out > rt1.outs
+sort -n rt2.out > rt2.outs
+sort -n rt4.out > rt4.outs
+
+diff rt1.outs rt2.outs
+diff rt1.outs rt4.outs
+diff rt2.outs rt4.outs
+
+echo "reduction"
+./randtrack_reduction 1 50 > rt1.out
+./randtrack_reduction 2 50 > rt2.out
+./randtrack_reduction 4 50 > rt4.out
+
+sort -n rt1.out > rt1.outs
+sort -n rt2.out > rt2.outs
+sort -n rt4.out > rt4.outs
+
+diff rt1.outs rt2.outs
+diff rt1.outs rt4.outs
+diff rt2.outs rt4.outs
