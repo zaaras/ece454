@@ -10,14 +10,14 @@
  * Swapping the two boards only involves swapping pointers, not
  * copying values.
  */
-typedef struct thread_args_struct{
+typedef struct thread_args_struct {
 	char *inboard;
 	char *outboard;
 	int start_row;
 	int end_row;
 	int ncols;
 	int nrows;
-}thread_args;
+} thread_args;
 
 #define SWAP_BOARDS( b1, b2 )  do { \
   char* temp = b1; \
@@ -26,6 +26,7 @@ typedef struct thread_args_struct{
 } while(0)
 
 #define TCOUNT 4
+//#define mod(x,m)  (((x) < 0) ? (((x) % (m)) + (m)) : ((x) % (m)))
 
 #define BOARD( __board, __i, __j )  (__board[(__i) + LDA*(__j)])
 
@@ -44,14 +45,15 @@ sequential_game_of_life(char* outboard, char* inboard, const int nrows,
 
 	for (curgen = 0; curgen < gens_max; curgen++) {
 		for (i = 0; i < TCOUNT; i++) {
-			args[i] =  (thread_args*)malloc(sizeof(thread_args));
-			args[i]->inboard=inboard;
-			args[i]->outboard=outboard;
-			args[i]->start_row=i*inc;
-			args[i]->end_row=i*inc+inc;
-			args[i]->ncols=ncols;
-			args[i]->nrows=nrows;
-			pthread_create(&thrd[i], NULL, &parallel_game_of_life, (void *)args[i]);
+			args[i] = (thread_args*) malloc(sizeof(thread_args));
+			args[i]->inboard = inboard;
+			args[i]->outboard = outboard;
+			args[i]->start_row = i * inc;
+			args[i]->end_row = i * inc + inc;
+			args[i]->ncols = ncols;
+			args[i]->nrows = nrows;
+			pthread_create(&thrd[i], NULL, &parallel_game_of_life,
+					(void *) args[i]);
 		}
 
 		for (i = 0; i < TCOUNT; i++) {
@@ -80,30 +82,62 @@ void parallel_game_of_life(void *args) {
 	int ncols = t_args->ncols;
 	int nrows = t_args->nrows;
 
-	int i,j;
+	int i, j, i1, j1;
+	int T = 32;
 
+	int inorth, isouth, jwest, jeast;
+	char neighbor_count;
 	const int LDA = nrows;
-	for (i = start_row; i < end_row; i++) {
-		//tiling
-		//loop unrolling
-		for (j = 0; j < ncols; j++) {
-			const int inorth = mod(i - 1, nrows);
-			const int isouth = mod(i + 1, nrows);
-			const int jwest = mod(j - 1, ncols);
-			const int jeast = mod(j + 1, ncols);
+	for (j = 0; j < ncols; j++) {
+		jwest = mod(j - 1, ncols);
+		jeast = mod(j + 1, ncols);
 
-			const char neighbor_count = BOARD (inboard, inorth, jwest)+
-			BOARD (inboard, inorth, j) +
-			BOARD (inboard, inorth, jeast) +
-			BOARD (inboard, i, jwest) +
-			BOARD (inboard, i, jeast) +
-			BOARD (inboard, isouth, jwest) +
-			BOARD (inboard, isouth, j) +
-			BOARD (inboard, isouth, jeast);
+		for (i = start_row; i < end_row;) {
+			inorth = mod(i - 1, nrows);
+			isouth = mod(i + 1, nrows);
+
+			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
+			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
+			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
+			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast) ;
 
 			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+			i++;
+			//---------------------//
+			inorth = mod(i - 1, nrows);
+			isouth = mod(i + 1, nrows);
+
+			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
+			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
+			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
+			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
+
+
+			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+			i++;
+
+			inorth = mod(i - 1, nrows);
+			isouth = mod(i + 1, nrows);
+
+			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
+			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
+			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
+			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
+
+			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+			i++;
+
+			inorth = mod(i - 1, nrows);
+			isouth = mod(i + 1, nrows);
+
+			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
+			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
+			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
+			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
+
+			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+			i++;
 
 		}
 	}
-
 }

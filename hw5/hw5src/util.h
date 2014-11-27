@@ -11,8 +11,10 @@
 static inline int 
 mod (int x, int m)
 {
-  return (x < 0) ? ((x % m) + m) : (x % m);
+	int t = x%m;
+  return (x < 0) ? (t + m) : t;
 }
+
 
 /**
  * Given neighbor count and current state, return zero if cell will be
