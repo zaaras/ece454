@@ -26,5 +26,6 @@ sequential_game_of_life (char* outboard,
 			 const int ncols,
 			 const int gens_max);
 
+void parallel_game_of_life(void *args);
 
 #endif /* _life_h */
