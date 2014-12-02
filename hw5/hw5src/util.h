@@ -12,6 +12,7 @@ static inline int
 mod (int x, int m)
 {
 	int t = x%m;
+	//return (x > m) ? (0) : x;
   return (x < 0) ? (t + m) : t;
 }
 
