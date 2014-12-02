@@ -26,17 +26,17 @@ typedef struct thread_args_struct {
 } while(0)
 
 #define TCOUNT 4
-//#define mod(x,m)  (((x) < 0) ? (((x) % (m)) + (m)) : ((x) % (m)))
 
-#define BOARD( __board, __i, __j )  (__board[(__i) + LDA*(__j)])
+#define BOARD( __board, __i, __j )  (__board[LDA*(__i) + (__j)])
 
 char*
 sequential_game_of_life(char* outboard, char* inboard, const int nrows,
 		const int ncols, const int gens_max) {
+
 	/* HINT: in the parallel decomposition, LDA may not be equal to
 	 nrows! */
 	const int LDA = nrows;
-	int curgen, i, j, inc;
+	int curgen, i, inc;
 
 	inc = nrows / TCOUNT;
 
@@ -82,30 +82,39 @@ void parallel_game_of_life(void *args) {
 	int ncols = t_args->ncols;
 	int nrows = t_args->nrows;
 
-	int i, j, i1, j1;
-	int T = 32;
+	int i, j, endr, endc;
 
 	int inorth, isouth, jwest, jeast;
 	char neighbor_count;
 	const int LDA = nrows;
 
-	for (j = 0; j < ncols; j++) {
-		jwest = j - 1;
-		jeast = j + 1;
-		if (jeast > ncols || jwest < 0) {
-			jwest = mod(j - 1, ncols);
-			jeast = mod(j + 1, ncols);
-			//continue;
+	i = start_row;
+	if(start_row==0){
+		i++;
+	}
+	endr = end_row;
+	if(endr==nrows-1){
+		endr--;
+	}
+	endc=ncols-1;
+
+	for (; i < endr; i++) {
+		inorth = i - 1;
+		isouth = i + 1;
+		if (inorth < 0) {
+			inorth = nrows - 1;
 		}
-
-		for (i = start_row; i < end_row;i++) {
-			inorth = i - 1;
-			isouth = i + 1;
-
-			if (inorth < 0 || isouth >= nrows) {
-				inorth = mod(i - 1, nrows);
-				isouth = mod(i + 1, nrows);
-				//continue;
+		if (isouth >= nrows) {
+			isouth = 0;
+		}
+		for (j = 1; j < endc; j++) {
+			jwest = j - 1;
+			jeast = j + 1;
+			if (jwest < 0) {
+				jwest = endc;
+			}
+			if (jeast >= ncols) {
+				jeast = 0;
 			}
 
 			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard,inorth, j)
@@ -114,163 +123,96 @@ void parallel_game_of_life(void *args) {
 					+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
 
 			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
-			/*i++;
-			//---------------------//
-
-			inorth = i - 1;
-			isouth = i + 1;
-
-			if (inorth < 0 || isouth >= nrows) {
-				inorth = mod(i - 1, nrows);
-				isouth = mod(i + 1, nrows);
-				//continue;
-			}
-			//inorth = mod(i - 1, nrows);
-			//isouth = mod(i + 1, nrows);
-
-			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
-			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
-			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
-			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
-
-			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
-			i++;
-
-			inorth = i - 1;
-			isouth = i + 1;
-
-			if (inorth < 0 || isouth >= nrows) {
-				inorth = mod(i - 1, nrows);
-				isouth = mod(i + 1, nrows);
-				//continue;
-			}
-
-			//inorth = mod(i - 1, nrows);
-			//isouth = mod(i + 1, nrows);
-
-			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
-			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
-			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
-			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
-
-			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
-			i++;
-
-			inorth = i - 1;
-			isouth = i + 1;
-
-			if (inorth < 0 || isouth >= nrows) {
-				inorth = mod(i - 1, nrows);
-				isouth = mod(i + 1, nrows);
-				//continue;
-			}
-			//inorth = mod(i - 1, nrows);
-			//isouth = mod(i + 1, nrows);
-
-			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
-			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
-			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
-			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
-
-			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
-			i++;*/
-
 		}
 	}
 
 	if (start_row == 0) {
-		for (i = start_row; i < 1; i++) {
-			inorth=nrows-1;
-			isouth=i+1;
-			for (j = 0; j < ncols; j++) {
-				jwest=j-1;
-				if(jwest<0){
-					jwest=ncols-1;
-				}
-				jeast=j+1;
-				if(jeast>=ncols){
-					jeast=0;
-				}
-				neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard,inorth, j)
-				+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
-				+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
-				+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
-
-				BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+		i = start_row;
+		inorth = nrows - 1;
+		isouth = i + 1;
+		for (j = 0; j < ncols; j++) {
+			jwest = j - 1;
+			if (jwest < 0) {
+				jwest = endc;
 			}
+			jeast = j + 1;
+			if (jeast >= ncols) {
+				jeast = 0;
+			}
+			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard,inorth, j)
+			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
+			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
+			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
+
+			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
 		}
 	}
 
-	if (end_row == nrows) {
-		for (i = end_row; i < nrows; i++) {
-			inorth=i-1;
-			isouth=0;
-			for (j = 0; j < ncols; j++) {
-				jwest=j-1;
-				if(jwest<0){
-					jwest=ncols-1;
-				}
-				jeast=j+1;
-				if(jeast>=ncols){
-					jeast=0;
-				}
-				neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
-				+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
-				+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
-				+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
-
-				BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+	if (end_row == nrows - 1) {
+		i = end_row;
+		inorth = i - 1;
+		isouth = 0;
+		for (j = 0; j < ncols; j++) {
+			jwest = j - 1;
+			if (jwest < 0) {
+				jwest = ncols - 1;
 			}
-		}
-	}
-
-	for (i = start_row; i < end_row; i++) {
-		inorth=i-1;
-		if(inorth<0){
-			inorth=nrows-1;
-		}
-		isouth=i+1;
-		if(isouth>=nrows){
-			isouth=0;
-		}
-		//inorth = mod(i - 1, nrows);
-		//isouth = mod(i + 1, nrows);
-		for (j = 0; i < 1; i++) {
-			jwest=ncols-1;
-			jeast=j+1;
+			jeast = j + 1;
+			if (jeast >= ncols) {
+				jeast = 0;
+			}
 			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
 			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
 			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
 			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
 
 			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
-
 		}
 	}
 
-	for (i = start_row; i < end_row; i++) {
-		inorth=i-1;
-		if(inorth<0){
-			inorth=nrows-1;
+	j = 0;
+	jwest = ncols - 1;
+	jeast = j + 1;
+	if(start_row==0){
+		i=start_row+1;
+	}else{
+		i=start_row;
+	}
+	for (; i < end_row; i++) {
+		inorth = i - 1;
+		isouth = i + 1;
+		if (isouth >= nrows) {
+			isouth = 0;
 		}
-		isouth=i+1;
-		if(isouth>=nrows){
-			isouth=0;
-		}
-		//inorth = mod(i - 1, nrows);
-		//isouth = mod(i + 1, nrows);
-		for (j = ncols - 1; j < ncols; j++) {
-			jeast=0;
-			jwest=j-1;
-			//jwest = mod(j - 1, ncols);
-			//jeast = mod(j + 1, ncols);
-			neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
-			+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
-			+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
-			+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
+		neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
+		+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
+		+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
+		+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
 
-			BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+		BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+	}
 
+	j = ncols - 1;
+	jeast = 0;
+	jwest = j - 1;
+	if(start_row==0){
+		i=start_row+1;
+	}else{
+		i=start_row;
+	}
+	for (; i < end_row; i++) {
+		inorth = i - 1;
+		isouth = i + 1;
+		if (isouth >= nrows) {
+			isouth = 0;
 		}
+
+		neighbor_count = BOARD (inboard, inorth, jwest)+BOARD (inboard, inorth, j)
+		+ BOARD (inboard, inorth, jeast) + BOARD (inboard, i, jwest)
+		+ BOARD (inboard, i, jeast) + BOARD (inboard, isouth, jwest)
+		+ BOARD (inboard, isouth, j) + BOARD (inboard, isouth, jeast);
+
+		BOARD(outboard, i, j)= alivep (neighbor_count, BOARD (inboard, i, j));
+
 	}
 }
