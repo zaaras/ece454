@@ -6,6 +6,14 @@
 #include "life.h"
 #include "util.h"
 #include <pthread.h>
+
+/*
+ *We implemented parallelization using 4 threads.
+ *We also removed all the if statements inside the loops by breaking up the board calculations.
+ * We first calculate row0, then the last row, then col0, then the last column, and finally calculate the inner board.
+ */
+
+
 /**
  * Swapping the two boards only involves swapping pointers, not
  * copying values.
@@ -29,6 +37,7 @@ typedef struct thread_args_struct {
 
 #define BOARD( __board, __i, __j )  (__board[LDA*(__i) + (__j)])
 
+//This function creates 4 threads to run the parallel game of life function, waits for all threads to return and swaps the board.
 char*
 sequential_game_of_life(char* outboard, char* inboard, const int nrows,
 		const int ncols, const int gens_max) {
@@ -73,6 +82,8 @@ sequential_game_of_life(char* outboard, char* inboard, const int nrows,
 	return inboard;
 }
 
+//This function runs the game_of_life function by breaking the board into chunks.
+// Each thread is given the start_row and end_row argument to calcualte the output for.
 void parallel_game_of_life(void *args) {
 	thread_args *t_args = args;
 	char *inboard = t_args->inboard;
